@@ -1,18 +1,23 @@
 package com.vadim.nakatani.fragments;
 
+import android.app.ListActivity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.app.Fragment;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.ListView;
 import android.widget.TextView;
 
 import com.vadim.nakatani.R;
+import com.vadim.nakatani.activitys.PatientCardActivity;
 
 
 /**
@@ -68,8 +73,9 @@ public class CardFile extends Fragment implements TextWatcher {
         mDrawerPatientList = (ListView) rootView.findViewById(R.id.patientListView);
 
         mAutoCompleteTextView.addTextChangedListener(this);
-        arrayAdapter = new ArrayAdapter<String>(getActivity(), R.layout.drawer_navigation_list_item, contacts);
+        mDrawerPatientList.setOnItemClickListener(new PatientListClickListener());
 
+        arrayAdapter = new ArrayAdapter<String>(getActivity(), R.layout.drawer_navigation_list_item, contacts);
         mDrawerPatientList.setAdapter(arrayAdapter);
 
         mAutoCompleteTextView.setText(mCardFindAutoCompleteText);
@@ -89,5 +95,20 @@ public class CardFile extends Fragment implements TextWatcher {
     @Override
     public void afterTextChanged(Editable editable) {
 
+    }
+
+    /**
+     * The click listener for ListView in the navigation drawer
+     */
+    private class PatientListClickListener implements ListView.OnItemClickListener {
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            mAutoCompleteTextView.setText(arrayAdapter.getItem(position));
+            Intent intent = new Intent();
+            intent.setClass(getActivity() ,PatientCardActivity.class);
+            startActivity(intent);
+
+            Log.e(this.getClass().getName(), "selected = " + position + " id = " + id);
+        }
     }
 }

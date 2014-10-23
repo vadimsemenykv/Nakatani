@@ -1,16 +1,17 @@
-package com.vadim.nakatani;
+package com.vadim.nakatani.activitys;
 
 import android.app.ActionBar;
-import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
+import android.content.res.Configuration;
 import android.os.Bundle;
-//import android.support.v4.app.FragmentTransaction;
+import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
@@ -19,20 +20,19 @@ import android.widget.AutoCompleteTextView;
 import android.widget.ListView;
 import android.widget.Toast;
 
-import android.content.res.Configuration;
-import android.support.v4.app.ActionBarDrawerToggle;
-//import android.support.v4.app.Fragment;
-//import android.support.v4.app.FragmentManager;
-//import android.support.v4.widget.DrawerLayout;
-import android.view.MenuInflater;
-
+import com.vadim.nakatani.R;
 import com.vadim.nakatani.fragments.CardFile;
 import com.vadim.nakatani.fragments.Diagnostics;
 import com.vadim.nakatani.fragments.MedicalHistory;
 import com.vadim.nakatani.fragments.Testing;
 
+//import android.support.v4.app.FragmentTransaction;
+//import android.support.v4.app.Fragment;
+//import android.support.v4.app.FragmentManager;
+//import android.support.v4.widget.DrawerLayout;
 
-public class MainActivity extends ActionBarActivity {
+
+public class PatientCardActivity extends ActionBarActivity {
 
     private String[] mScreenTitles;
     private DrawerLayout mDrawerLayout;
