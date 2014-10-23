@@ -41,7 +41,7 @@ public class CardFile extends Fragment implements TextWatcher {
      * Use this factory method to create a new instance of
      * this fragment using the provided parameters.
      *
-     * @param cardFindAutoCompleteText
+     * @param cardFindAutoCompleteText SAVED_TEXT_KEY
      * @return A new instance of fragment CardFile
      */
     public static CardFile newInstance(String cardFindAutoCompleteText) {
