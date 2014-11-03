@@ -10,12 +10,12 @@ import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbManager;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.app.NavUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.RadioButton;
 import android.widget.ScrollView;
@@ -25,11 +25,11 @@ import android.widget.Toast;
 import com.hoho.android.usbserial.driver.UsbSerialDriver;
 import com.hoho.android.usbserial.driver.UsbSerialPort;
 import com.hoho.android.usbserial.driver.UsbSerialProber;
-import com.hoho.android.usbserial.util.HexDump;
 import com.hoho.android.usbserial.util.SerialInputOutputManager;
 import com.vadim.nakatani.R;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -56,9 +56,14 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
     private static final String MEASUREMENT_POSITION_HI = "high";
     private static final String MEASUREMENT_POSITION_LOW = "low";
 
+    /**
+     * KEY to add arguments in bundle
+     */
     private static final String IS_CONNECTED_KEY = "is connected";
 
     private volatile boolean isConnected;
+    private boolean isHiMessageWasSend;
+    private boolean isVerificatedHiMessage;
     private String measurementPosition = MEASUREMENT_POSITION_LOW;
     private int[] measuredValues = new int[5];
 
@@ -73,6 +78,12 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
     private TextView mDumpTextView;
     private ScrollView mScrollView;
 
+    private Handler h;
+
+    private static final int READ_WAIT_MILLIS = 200;
+    private static final int BUFSIZ = 4096;
+    private final ByteBuffer mReadBuffer = ByteBuffer.allocate(BUFSIZ);
+
     private UsbSerialPort mPort;
     private UsbSerialDriver mDriver;
     private UsbDevice mDevice;
@@ -86,11 +97,10 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
             if (ACTION_USB_PERMISSION.equals(action)) {
                 synchronized (this) {
                     mDevice = (UsbDevice)intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
-
                     if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
                         if(mDevice != null){
                             onDeviceStateChange();
-                            connectToDevice();
+                            openDevicePort();
                         }
                     }
                     else {
@@ -101,6 +111,7 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
         }
     };
 
+    //TODO delete this block of code
     private final ExecutorService mExecutor = Executors.newSingleThreadExecutor();
     private SerialInputOutputManager mSerialIoManager;
     private final SerialInputOutputManager.Listener mListener = new SerialInputOutputManager.Listener() {
@@ -125,8 +136,14 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_calibration);
 
+        /**
+         * restore arguments from bundle
+         */
         isConnected = ((savedInstanceState != null) && savedInstanceState.containsKey(IS_CONNECTED_KEY))?savedInstanceState.getBoolean(IS_CONNECTED_KEY):false;
 
+        /**
+         * initialize UI variables
+         */
         buttonStart = (Button) findViewById(R.id.button_calibration_start);
         buttonStart.setOnClickListener(this);
         radioButtonHi = (RadioButton) findViewById(R.id.radio_button_calibration_hi);
@@ -162,17 +179,15 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
         mDumpTextView = (TextView) findViewById(R.id.textViewdfdf);
         mScrollView = (ScrollView) findViewById(R.id.scrollView);
 
+        /**
+         * initialize USB manager
+         */
         mUsbManager = (UsbManager) getSystemService(Context.USB_SERVICE);
         mPermissionIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_USB_PERMISSION), 0);
-        IntentFilter filter = new IntentFilter("android.hardware.usb.action.ACTION_USB_DEVICE_ATTACHED");
-        filter.addAction(ACTION_USB_PERMISSION);
-        filter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED);
-        filter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
+        IntentFilter filter = new IntentFilter(ACTION_USB_PERMISSION);
         registerReceiver(mUsbReceiver, filter);
 
-//        if (isConnected) {
-//            findUSBDevices();
-//        }
+        h = new Handler();
     }
 
     @Override
@@ -200,37 +215,70 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.button_calibration_start:
-                findUSBDevices();
-//                buttonStart.setEnabled(false);
-                //TODO add check if port == null here or in sendMeasurementMessage() method;
-                //TODO change this on handler/OnUI......run to use buttonStart.setEnabled(true) in the end of run;
-//                Thread thread = new Thread(new Runnable() {
-//                    @Override
-//                    public void run() {
-//                        int i = 0;
-//                        while (i < 50) {
-//                            if (!isConnected) {
-//                                try {
-//                                    TimeUnit.MILLISECONDS.sleep(100);
-//                                } catch (InterruptedException e) {
-//                                    e.printStackTrace();
-//                                }
+                if (!isConnected) {
+                    findUSBDevices();
+                }
+
+//                if (isConnected && !isHiMessageWasSend) {
+//                    if (mPort != null) {
+//                        try {
+//                            int i = 0;
+//                            while ( i < 10) {
+//                                sendHiMessage();
+//                                TimeUnit.MILLISECONDS.sleep(400);
+//                                if (isHiMessageWasSend) i = 100;
 //                                i++;
 //                            }
-//                        }
-//                        i = 0;
-//                        while (i < 5) {
-//                            try {
-//                                TimeUnit.MILLISECONDS.sleep(100);
-//                            } catch (InterruptedException e) {
-//                                e.printStackTrace();
+//                            if (!isHiMessageWasSend) {
+//                                //TODO here must be dialog
+//                                Toast.makeText(getApplicationContext(), "Не получилось подключится к прибору + \n" +
+//                                        "Проверьте подключение", Toast.LENGTH_SHORT).show();
+//                                isConnected = false;
 //                            }
-//                            sendMeasurementMessage();
-//                            i++;
+//                        } catch (InterruptedException e) {
+////                            e.printStackTrace();
 //                        }
+//                    }else {
+//                        isConnected = false;
 //                    }
-//                });
-//                thread.start();
+//                }
+
+//                buttonStart.setEnabled(false);
+                //TODO add check mPort != null else isConnected = false
+                //TODO add check if port == null here or in sendMeasurementMessage() method;
+                //TODO change this on handler/OnUI......run to use buttonStart.setEnabled(true) in the end of run;
+                Thread threadSendMessage = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        int i = 0;
+                        //TODO add some check if to long no any answer
+                        while (i < 50) {
+                            if (!isConnected) {
+                                try {
+                                    TimeUnit.MILLISECONDS.sleep(100);
+                                } catch (InterruptedException e) {
+//                                    e.printStackTrace();
+                                }
+                                i++;
+                            }
+                            if (isConnected) break;
+                        }
+                        i = 0;
+                        while (i < 5) {
+                            try {
+                                TimeUnit.MILLISECONDS.sleep(100);
+                            } catch (InterruptedException e) {
+//                                e.printStackTrace();
+                            }
+                            if (isConnected) {
+//                                sendHiMessage();
+                                h.post(sendHiMessage);
+                            }
+                            i++;
+                        }
+                    }
+                });
+                threadSendMessage.start();
                 break;
             default:
                 break;
@@ -279,20 +327,19 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
     }
 
     private void onDeviceStateChange() {
-        stopIoManager();
-        startIoManager();
+//        stopIoManager();
+//        startIoManager();
     }
 
     private void updateReceivedData(byte[] data) {
         //TODO add hi message process
         //TODO if hi message - set isConnected true
         //TODO change hardcoded values onto variables
-        isConnected = true;
-        mDumpTextView.append("Connected" + "\n\n");
+//        isConnected = true;
+        isHiMessageWasSend = true;
         final String msg = new String(data);
+        mDumpTextView.append(msg + "\n\n");
         if (msg.indexOf("G") == 0) {
-            mDumpTextView.append("msg = " + msg + "\n\n");
-
             int g_index = msg.indexOf("G");
             int o_index = msg.indexOf("O");
             int msg_length = msg.length();
@@ -328,8 +375,6 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
     }
 
     private void findUSBDevices() {
-        mDumpTextView.setText("findUsb");
-        mScrollView.smoothScrollTo(0, mDumpTextView.getBottom());
         final List<UsbSerialDriver> drivers = UsbSerialProber.getDefaultProber().findAllDrivers(mUsbManager);
 
         final List<UsbSerialPort> result = new ArrayList<UsbSerialPort>();
@@ -346,14 +391,13 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
 
             if (device.getVendorId() == VENDOR_ID && device.getProductId() == PRODUCT_ID) {
                 findDevice = true;
-//                if (!isConnected) {
+                if (!isConnected) {
                     mPort = usp;
                     mDriver = driver;
                     mDevice = device;
 
-//                if (!isConnected) {
                     mUsbManager.requestPermission(mDevice, mPermissionIntent);
-//                }
+                }
             }
         }
         if (!findDevice) {
@@ -361,12 +405,12 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
         }
     }
 
-    private void connectToDevice() {
-        UsbDeviceConnection connection = mUsbManager.openDevice(mDevice);
+    private void openDevicePort() {
+        mConnection = mUsbManager.openDevice(mDevice);
         try {
-            mPort.open(connection);
+            mPort.open(mConnection);
             mPort.setParameters(9600, 8, UsbSerialPort.STOPBITS_1, UsbSerialPort.PARITY_NONE);
-            mPort.write(MESSAGE_HI, 1000);
+            isConnected = true;
         }catch (IOException e) {
             Log.e(TAG, "Error setting up device: " + e.getMessage(), e);
             try {
@@ -378,24 +422,48 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
         }
     }
 
-    private void sendMeasurementMessage() {
-        //TODO change hardcoded values onto variables
-//        UsbDeviceConnection connection = mUsbManager.openDevice(mDevice);
-        try {
-//            mPort.open(connection);
-//            mPort.setParameters(9600, 8, UsbSerialPort.STOPBITS_1, UsbSerialPort.PARITY_NONE);
-            byte[] bytesHello = new byte[] {(byte) 0x47};
-            mPort.write(bytesHello, 1000);
-
-//            int len = mPort.read(mReadBuffer.array(), 200);
-//            byte[] data = new byte[len];
+//    private void sendHiMessage() {
+    Runnable sendHiMessage = new Runnable() {
+        @Override
+        public void run() {
+            try {
+                mPort.write(MESSAGE_HI,1000);
+                int len = mPort.read(mReadBuffer.array(), READ_WAIT_MILLIS);
+                final byte[] data = new byte[len];
+                mReadBuffer.get(data, 0, len);
+                updateReceivedData(data);
+                mReadBuffer.clear();
+            }catch (IOException e) {
+                try {
+                    mPort.close();
+                } catch (IOException e2) {
+                    // Ignore.
+                }
+                mPort = null;
+            }
+        }
+    };
+//        try {
+//            mPort.write(MESSAGE_HI,1000);
+//            int len = mPort.read(mReadBuffer.array(), READ_WAIT_MILLIS);
+//            final byte[] data = new byte[len];
 //            mReadBuffer.get(data, 0, len);
 //            updateReceivedData(data);
 //            mReadBuffer.clear();
-//            mPort.close();
+//        }catch (IOException e) {
+//            try {
+//                mPort.close();
+//            } catch (IOException e2) {
+//                // Ignore.
+//            }
+//            mPort = null;
+//        }
+//    }
+
+    private void sendMeasurementMessage() {
+        try {
+            mPort.write(MESSAGE_GET_MEASURED_VALUE, 1000);
         }catch (IOException e) {
-//            Log.e(TAG, "Error setting up device: " + e.getMessage(), e);
-//                    mTitleTextView.setText("Error opening device: " + e.getMessage());
             try {
                 mPort.close();
             } catch (IOException e2) {
