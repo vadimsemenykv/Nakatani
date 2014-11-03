@@ -21,10 +21,10 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import com.vadim.nakatani.R;
-import com.vadim.nakatani.fragments.CardFile;
-import com.vadim.nakatani.fragments.Diagnostics;
-import com.vadim.nakatani.fragments.MedicalHistory;
-import com.vadim.nakatani.fragments.Testing;
+import com.vadim.nakatani.fragments.home_screen.CardFile;
+import com.vadim.nakatani.fragments.home_screen.Diagnostics;
+import com.vadim.nakatani.fragments.home_screen.MedicalHistory;
+import com.vadim.nakatani.fragments.home_screen.Testing;
 
 //import android.support.v4.app.FragmentTransaction;
 //import android.support.v4.app.Fragment;

@@ -1,10 +1,10 @@
 package com.vadim.nakatani;
 
 import android.app.ActionBar;
-import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
+import android.content.Intent;
 import android.os.Bundle;
 //import android.support.v4.app.FragmentTransaction;
 import android.support.v4.widget.DrawerLayout;
@@ -16,6 +16,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -26,10 +27,13 @@ import android.support.v4.app.ActionBarDrawerToggle;
 //import android.support.v4.widget.DrawerLayout;
 import android.view.MenuInflater;
 
-import com.vadim.nakatani.fragments.CardFile;
-import com.vadim.nakatani.fragments.Diagnostics;
-import com.vadim.nakatani.fragments.MedicalHistory;
-import com.vadim.nakatani.fragments.Testing;
+import com.vadim.nakatani.activitys.TestActivity;
+import com.vadim.nakatani.entity.PatientEntity;
+import com.vadim.nakatani.fragments.home_screen.CardFile;
+import com.vadim.nakatani.fragments.home_screen.Diagnostics;
+import com.vadim.nakatani.fragments.home_screen.MedicalHistory;
+import com.vadim.nakatani.fragments.PatientPrivateInfo;
+import com.vadim.nakatani.fragments.home_screen.Testing;
 
 
 public class MainActivity extends ActionBarActivity {
@@ -37,6 +41,7 @@ public class MainActivity extends ActionBarActivity {
     private String[] mScreenTitles;
     private DrawerLayout mDrawerLayout;
     private ListView mDrawerList;
+    private LinearLayout mDrawerListContainer;
 
     private ActionBarDrawerToggle mDrawerToggle;
     private CharSequence mDrawerTitle;
@@ -45,8 +50,13 @@ public class MainActivity extends ActionBarActivity {
     private int mCurrentSelectedPosition;
     private String cardFindAutoCompleteText;
 
+    private boolean isPatientFragmentWasActive;
+    private PatientEntity patientEntity;
+
+    private static final String IS_PATIENT_FRAGMENT_ACTIVE = "is patient fargment active";
     private static final String ARG_SECTION_NUMBER = "section_number";
-    final static String SAVED_TEXT_KEY = "SavedText";
+    private static final String SAVED_TEXT_KEY = "SavedText";
+//    private static final String IS_PATIENT_NOT_NULL = "patient not null";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,10 +70,13 @@ public class MainActivity extends ActionBarActivity {
          */
         mCurrentSelectedPosition = ((savedInstanceState != null) && savedInstanceState.containsKey(ARG_SECTION_NUMBER))?savedInstanceState.getInt(ARG_SECTION_NUMBER):0;
         cardFindAutoCompleteText = ((savedInstanceState != null) && savedInstanceState.containsKey(SAVED_TEXT_KEY))?savedInstanceState.getString(SAVED_TEXT_KEY):"";
+        isPatientFragmentWasActive = ((savedInstanceState != null) && savedInstanceState.containsKey(IS_PATIENT_FRAGMENT_ACTIVE))?savedInstanceState.getBoolean(IS_PATIENT_FRAGMENT_ACTIVE):false;
 
         mScreenTitles = getResources().getStringArray(R.array.screen_array);
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
-        mDrawerList = (ListView) findViewById(R.id.left_drawer);
+        mDrawerList = (ListView) findViewById(R.id.left_drawer_lw);
+
+        mDrawerListContainer = (LinearLayout) findViewById(R.id.left_drawer);
 
         /**
          * Set the adapter for the list view
@@ -96,7 +109,11 @@ public class MainActivity extends ActionBarActivity {
         getActionBar().setDisplayHomeAsUpEnabled(true);
         getActionBar().setHomeButtonEnabled(true);
 
-        selectItem(mCurrentSelectedPosition);
+        if(isPatientFragmentWasActive) {
+            swapFragmentToPrivateInfo();
+        } else {
+            selectItem(mCurrentSelectedPosition);
+        }
 //        Log.e(this.getClass().getName(), "from onCreate mCurrentSelectedPosition = " + mCurrentSelectedPosition);
     }
 
@@ -120,7 +137,8 @@ public class MainActivity extends ActionBarActivity {
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
         /* If the nav drawer is open, hide action items related to the content view*/
-        boolean drawerOpen = mDrawerLayout.isDrawerOpen(mDrawerList);
+//        boolean drawerOpen = mDrawerLayout.isDrawerOpen(mDrawerList);
+        boolean drawerOpen = mDrawerLayout.isDrawerOpen(mDrawerListContainer);
         menu.findItem(R.id.action_search).setVisible(!drawerOpen);
         return super.onPrepareOptionsMenu(menu);
     }
@@ -170,11 +188,25 @@ public class MainActivity extends ActionBarActivity {
     /**
      * Swaps fragments in the main content view
      */
+    public void swapFragmentToPrivateInfo() {
+        isPatientFragmentWasActive = true;
+        Fragment fragment = new PatientPrivateInfo();
+        FragmentManager fragmentManager = getFragmentManager();
+        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+        fragmentTransaction.replace(R.id.content_frame, fragment).commit();
+        mDrawerLayout.closeDrawer(mDrawerListContainer);
+    }
+
+    /**
+     * Swaps fragments in the main content view
+     */
     private void selectItem(int position) {
         /* Update the main content by replacing fragments*/
         mCurrentSelectedPosition = position;
+        isPatientFragmentWasActive = false;
 //        Log.e(this.getClass().getName(), "from selectItem mCurrentSelectedPosition = " + mCurrentSelectedPosition);
         Fragment fragment = null;
+//        fragment = ShowDataFromUSB.newInstance(this);
         switch (position) {
             case 0:
                 mTitle = mScreenTitles[mCurrentSelectedPosition];
@@ -193,7 +225,7 @@ public class MainActivity extends ActionBarActivity {
             case 3:
                 mTitle = mScreenTitles[mCurrentSelectedPosition];
                 cardFindAutoCompleteText = "";
-                fragment = new Testing();
+                fragment = Testing.newInstance();
                 break;
             default:
                 break;
@@ -210,7 +242,8 @@ public class MainActivity extends ActionBarActivity {
             /* Highlight the selected item, update the title, and close the drawer*/
             mDrawerList.setItemChecked(position, true);
             setTitle(mScreenTitles[position]);
-            mDrawerLayout.closeDrawer(mDrawerList);
+//            mDrawerLayout.closeDrawer(mDrawerList);
+            mDrawerLayout.closeDrawer(mDrawerListContainer);
         } else {
             // Error
             Log.e(this.getClass().getName(), "Error. Fragment is not created");
@@ -245,6 +278,7 @@ public class MainActivity extends ActionBarActivity {
     public void onSaveInstanceState(Bundle savedInstanceState){
         /* Saving variables*/
         savedInstanceState.putInt(ARG_SECTION_NUMBER, mCurrentSelectedPosition);
+        savedInstanceState.putBoolean(IS_PATIENT_FRAGMENT_ACTIVE, isPatientFragmentWasActive);
         if(findViewById(R.id.autoCompleteTextView) != null){
             savedInstanceState.putString(SAVED_TEXT_KEY, ((AutoCompleteTextView)findViewById(R.id.autoCompleteTextView)).getText().toString());
         }

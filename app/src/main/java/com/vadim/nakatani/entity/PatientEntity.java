@@ -6,21 +6,29 @@ package com.vadim.nakatani.entity;
 public final class PatientEntity {
     private static PatientEntity patientEntity;
 
-    private String userID;
-    private String userName;
+    private String patientID;
+    private String patientName;
 //    private String userFirName;
 //    private String userSerName;
-    private String userAge;
+    private String patientAge;
 
-    public static synchronized PatientEntity getUserInstance(){
+    public static synchronized PatientEntity getPatientInstance(){
         if(patientEntity == null) patientEntity = new PatientEntity();
         return patientEntity;
     }
     private PatientEntity(){}
 
-    public synchronized void initializeUserData(String userID, String userName, String userAge){
-        this.userID = userID;
-        this.userName = userName;
-        this.userAge = userAge;
+    public synchronized void initializePatientData(String userID, String userName, String userAge){
+        this.patientID = userID;
+        this.patientName = userName;
+        this.patientAge = userAge;
+    }
+
+    public static boolean isExist() {
+        return patientEntity != null ? true : false;
+    }
+
+    public static void invalidatePatient() {
+        patientEntity = null;
     }
 }

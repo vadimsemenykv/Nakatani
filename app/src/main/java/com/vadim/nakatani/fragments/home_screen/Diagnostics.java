@@ -1,4 +1,4 @@
-package com.vadim.nakatani.fragments;
+package com.vadim.nakatani.fragments.home_screen;
 
 import android.app.Activity;
 import android.net.Uri;
@@ -14,9 +14,9 @@ import com.vadim.nakatani.R;
 /**
  *
  */
-public class MedicalHistory extends Fragment {
+public class Diagnostics extends Fragment {
 
-    public MedicalHistory() {
+    public Diagnostics() {
         // Required empty public constructor
     }
 
@@ -24,7 +24,7 @@ public class MedicalHistory extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        View rootView = inflater.inflate(R.layout.fragment_medical_history, container,
+        View rootView = inflater.inflate(R.layout.fragment_diagnostics, container,
                 false);
 
         return rootView;
