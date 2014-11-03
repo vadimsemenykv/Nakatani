@@ -15,6 +15,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.RadioButton;
 import android.widget.ScrollView;
@@ -38,8 +39,19 @@ import java.util.concurrent.TimeUnit;
 public class CalibrationActivity extends Activity implements View.OnClickListener{
     private final String TAG = CalibrationActivity.class.getSimpleName();
     private static final String ACTION_USB_PERMISSION = "com.android.example.USB_PERMISSION";
-    private static final String VENDOR_ID = "4292";
-    private static final String PRODUCT_ID = "60000";
+
+    private static final int VENDOR_ID = 4292;
+    private static final int PRODUCT_ID = 60000;
+
+    private static final String MESSAGE_HI = "I";
+    private static final String MESSAGE_GET_MEASURED_VALUE = "G";
+    private static final String MESSAGE_GET_PROBE_BUTTON_STATE = "B";
+    private static final String MESSAGE_END_PACKAGE_TRANSMIT = "A";
+    private static final String END_RECEIVED_MESSAGE = "O";
+
+    private static final String IS_CONNECTED_KEY = "is connected";
+
+    private volatile boolean isConnected;
 
     RadioButton radioButtonHi;
     RadioButton radioButtonLow;
@@ -63,15 +75,12 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
             if (ACTION_USB_PERMISSION.equals(action)) {
-//                Toast.makeText(context, "ACTION_USB_PERMISSION", Toast.LENGTH_LONG).show();
-
                 synchronized (this) {
                     mDevice = (UsbDevice)intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
 
                     if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
                         if(mDevice != null){
-//                            findUSBDevices();
-//                            onDeviceStateChange();
+                            onDeviceStateChange();
                             connectToDevice();
                         }
                     }
@@ -107,6 +116,8 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_calibration);
 
+        isConnected = ((savedInstanceState != null) && savedInstanceState.containsKey(IS_CONNECTED_KEY))?savedInstanceState.getBoolean(IS_CONNECTED_KEY):false;
+
         buttonStart = (Button) findViewById(R.id.button_calibration_start);
         buttonStart.setOnClickListener(this);
         radioButtonHi = (RadioButton) findViewById(R.id.radio_button_calibration_hi);
@@ -140,14 +151,17 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
         mDumpTextView = (TextView) findViewById(R.id.textViewdfdf);
         mScrollView = (ScrollView) findViewById(R.id.scrollView);
 
-
         mUsbManager = (UsbManager) getSystemService(Context.USB_SERVICE);
         mPermissionIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_USB_PERMISSION), 0);
         IntentFilter filter = new IntentFilter("android.hardware.usb.action.ACTION_USB_DEVICE_ATTACHED");
-//        IntentFilter filter = new IntentFilter(ACTION_USB_PERMISSION);
         filter.addAction(ACTION_USB_PERMISSION);
-//        filter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
+        filter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED);
+        filter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
         registerReceiver(mUsbReceiver, filter);
+
+//        if (isConnected) {
+//            findUSBDevices();
+//        }
     }
 
     @Override
@@ -176,8 +190,7 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
         switch (view.getId()) {
             case R.id.button_calibration_start:
                 findUSBDevices();
-//                onDeviceStateChange();
-//                connectToDevice();
+
 //                Thread thread = new Thread(new Runnable() {
 //                    @Override
 //                    public void run() {
@@ -194,11 +207,24 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
 //                    }
 //                });
 //                thread.start();
-//                sendMeasurementMessage();
                 break;
             default:
                 break;
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        stopIoManager();
+        if (mPort != null) {
+            try {
+                mPort.close();
+            } catch (IOException e) {
+                // Ignore.
+            }
+            mPort = null;
+        }
+        super.onDestroy();
     }
 
     /*@Override
@@ -249,6 +275,16 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
         onDeviceStateChange();
     }*/
 
+    @Override
+    public void onSaveInstanceState(Bundle savedInstanceState){
+        /* Saving variables*/
+        savedInstanceState.putBoolean(IS_CONNECTED_KEY, isConnected);
+        //TODO add saving viewText value
+        //TODO add saving measured values int[]
+        /* Call at the end*/
+        super.onSaveInstanceState(savedInstanceState);
+    }
+
     private void stopIoManager() {
         if (mSerialIoManager != null) {
             Log.i(TAG, "Stopping io manager ..");
@@ -271,13 +307,6 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
     }
 
     private void updateReceivedData(byte[] data) {
-//        final String message = HexDump.dumpHexString(data);
-//        textLowValueNew.setText(message);
-//        if (message.indexOf("G") == 0) {
-//            textLowValueNew.setText(message);
-//        }
-//        final String message = "Read " + data.length + " bytes: \n"
-//        + HexDump.dumpHexString(data) + "\n\n";
         final String msg = new String(data);
         if (msg.indexOf("G") == 0) {
             mDumpTextView.append("msg = " + msg + "\n\n");
@@ -327,40 +356,26 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
             result.addAll(ports);
         }
 
-//        text.setText("");
+        boolean findDevice = false;
         for (UsbSerialPort usp : result) {
             UsbSerialDriver driver = usp.getDriver();
             UsbDevice device = driver.getDevice();
 
-            mPort = usp;
-            mDriver = driver;
-            mDevice = device;
+            if (device.getVendorId() == VENDOR_ID && device.getProductId() == PRODUCT_ID) {
+                findDevice = true;
+//                if (!isConnected) {
+                    mPort = usp;
+                    mDriver = driver;
+                    mDevice = device;
 
-            mUsbManager.requestPermission(mDevice, mPermissionIntent);
-
-            String msg1 = String.format("Vendor %s Product %s",
-                    HexDump.toHexString((short) device.getVendorId()),
-                    HexDump.toHexString((short) device.getProductId()));
-            String msg2 = driver.getClass().getSimpleName();
-            String msg = msg1 + "\n" + msg2;
-//            text.append(msg);
-        }
-
-        /*UsbDeviceConnection connection = mUsbManager.openDevice(mDevice);
-        try {
-            mPort.open(connection);
-            mPort.setParameters(9600, 8, UsbSerialPort.STOPBITS_1, UsbSerialPort.PARITY_NONE);
-        }catch (IOException e) {
-//            Log.e(TAG, "Error setting up device: " + e.getMessage(), e);
-//                    mTitleTextView.setText("Error opening device: " + e.getMessage());
-            try {
-                mPort.close();
-            } catch (IOException e2) {
-                // Ignore.
+//                if (!isConnected) {
+                    mUsbManager.requestPermission(mDevice, mPermissionIntent);
+//                }
             }
-            mPort = null;
-        }*/
-//        onDeviceStateChange();
+        }
+        if (!findDevice) {
+            isConnected = false;
+        }
     }
 
     private void connectToDevice() {
