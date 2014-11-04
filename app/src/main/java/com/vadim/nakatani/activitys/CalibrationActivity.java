@@ -291,6 +291,7 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
                             }
                         }
 
+                        //TODO add saving that measurement is in process, to continue it after rotation
 
                         //TODO maybe add new thread/process in this to interrupt this both if they will not answer for a long time and enable buttons end etc.
 
@@ -350,7 +351,7 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
         if (mPort != null) {
             try {
                 mPort.close();
-                //TODO reset progress bar
+                //TODO reset progress bar this is not work
                 progressBar.setProgress(0);
             } catch (IOException e) {
                 // Ignore.
@@ -362,6 +363,7 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
 
     @Override
     public void onSaveInstanceState(Bundle savedInstanceState){
+        progressBar.setProgress(0);
         /* Saving variables*/
 //        savedInstanceState.putBoolean(IS_CONNECTED_KEY, isConnected);
         //TODO add saving viewText value
