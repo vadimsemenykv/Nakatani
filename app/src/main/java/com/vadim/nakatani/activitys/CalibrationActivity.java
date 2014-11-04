@@ -249,97 +249,78 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
                     findUSBDevices();
                 }
 
+                //TODO process if device will be detach
+
                 Thread threadSendMessage = new Thread(new Runnable(){
 
                     @Override
                     public void run() {
+                        h.sendEmptyMessage(HANDLER_MSG_START_PROGRESS_BAR);
+                        h.sendEmptyMessage(HANDLER_MSG_DISABLE_BUTTON);
+                        h.sendEmptyMessage(HANDLER_MSG_DISABLE_RADIO_BUTTONS);
 
+                        if (!isHiMessageWasReceaved.get()) {
+                            Thread threadSendHiMessage = new Thread(new MuRunnable(permissionDialogAnswered) {
+                                @Override
+                                public void run() {
+                                    while (true) {
+                                        if (permissionDialogAnswered.get() == true) break;
+                                    }
 
-
-                h.sendEmptyMessage(HANDLER_MSG_START_PROGRESS_BAR);
-                h.sendEmptyMessage(HANDLER_MSG_DISABLE_BUTTON);
-                h.sendEmptyMessage(HANDLER_MSG_DISABLE_RADIO_BUTTONS);
-
-                if (!isHiMessageWasReceaved.get()) {
-                    Thread threadSendHiMessage = new Thread(new MuRunnable(permissionDialogAnswered) {
-                        @Override
-                        public void run() {
-                            while (true) {
-                                if (permissionDialogAnswered.get() == true) break;
-                            }
-
-//                            h.sendEmptyMessage(HANDLER_MSG_START_PROGRESS_BAR);
-//                            h.sendEmptyMessage(HANDLER_MSG_DISABLE_BUTTON);
-//                            h.sendEmptyMessage(HANDLER_MSG_DISABLE_RADIO_BUTTONS);
-
-                            int i = 0;
-                            while (i < 5) {
-                                if (isHiMessageWasReceaved.get() == true) break;
-                                try {
-                                    TimeUnit.MILLISECONDS.sleep(100);
-                                } catch (InterruptedException e) {
-//                                e.printStackTrace();
+                                    int i = 0;
+                                    while (i < 5) {
+                                        if (isHiMessageWasReceaved.get() == true) break;
+                                        try {
+                                            TimeUnit.MILLISECONDS.sleep(100);
+                                        } catch (InterruptedException e) {
+        //                                e.printStackTrace();
+                                        }
+                                        if (isConnected) {
+                                            h.post(sendHiMessage);
+                                        }
+                                        i++;
+                                    }
                                 }
-                                if (isConnected) {
-                                    h.post(sendHiMessage);
+                            });
+                            threadSendHiMessage.start();
+
+                            if (threadSendHiMessage.isAlive()) {
+                                try{
+                                    threadSendHiMessage.join();
+                                }catch(InterruptedException e){}
+                            }
+                        }
+
+
+                        //TODO maybe add new thread/process in this to interrupt this both if they will not answer for a long time and enable buttons end etc.
+
+                        Thread threadSendMeasurementMessage = new Thread(new MuRunnable(isHiMessageWasReceaved) {
+                            @Override
+                            public void run() {
+                                while (true) {
+                                    if (isHiMessageWasReceaved.get() == true) break;
                                 }
-                                i++;
+
+                                int i = 0;
+                                while (i < 20) {
+                                    try {
+                                        TimeUnit.MILLISECONDS.sleep(100);
+                                    } catch (InterruptedException e) {
+        //                                e.printStackTrace();
+                                    }
+                                    if (isConnected) {
+                                        h.post(sendMeasurementMessage);
+                                    }
+                                    i++;
+                                }
+
+                                h.sendEmptyMessage(HANDLER_MSG_STOP_PROGRESS_BAR);
+                                h.sendEmptyMessage(HANDLER_MSG_ENABLE_BUTTON);
+                                h.sendEmptyMessage(HANDLER_MSG_ENABLE_RADIO_BUTTONS);
+                                h.sendEmptyMessage(HANDLER_MSG_UPDATE_MEASUREMENT_TEXT_FIELDS);
                             }
-
-//                            h.sendEmptyMessage(HANDLER_MSG_STOP_PROGRESS_BAR);
-//                            h.sendEmptyMessage(HANDLER_MSG_ENABLE_BUTTON);
-//                            h.sendEmptyMessage(HANDLER_MSG_ENABLE_RADIO_BUTTONS);
-                        }
-                    });
-                    threadSendHiMessage.start();
-
-                    if (threadSendHiMessage.isAlive()) {
-                        try{
-                            threadSendHiMessage.join();
-                        }catch(InterruptedException e){}
-                    }
-                }
-
-
-                //TODO maybe add new thread to interapt this both if they will not answer for a long time and enable buttons end etc.
-
-                Thread threadSendMeasurementMessage = new Thread(new MuRunnable(isHiMessageWasReceaved) {
-                    @Override
-                    public void run() {
-//                        if (!progresBarDrawer.isAlive()) h.sendEmptyMessage(HANDLER_MSG_START_PROGRESS_BAR);
-//                        h.sendEmptyMessage(HANDLER_MSG_DISABLE_BUTTON);
-//                        h.sendEmptyMessage(HANDLER_MSG_DISABLE_RADIO_BUTTONS);
-
-                        while (true) {
-                            if (isHiMessageWasReceaved.get() == true) break;
-                        }
-
-                        int i = 0;
-                        while (i < 20) {
-                            try {
-                                TimeUnit.MILLISECONDS.sleep(100);
-                            } catch (InterruptedException e) {
-//                                e.printStackTrace();
-                            }
-                            if (isConnected) {
-                                h.post(sendMeasurementMessage);
-                            }
-                            i++;
-                        }
-
-                        h.sendEmptyMessage(HANDLER_MSG_STOP_PROGRESS_BAR);
-                        h.sendEmptyMessage(HANDLER_MSG_ENABLE_BUTTON);
-                        h.sendEmptyMessage(HANDLER_MSG_ENABLE_RADIO_BUTTONS);
-                        h.sendEmptyMessage(HANDLER_MSG_UPDATE_MEASUREMENT_TEXT_FIELDS);
-                    }
-                });
-                threadSendMeasurementMessage.start();
-//                        if (threadSendMeasurementMessage.isAlive()) {
-//                            try{
-//                                threadSendMeasurementMessage.join();
-//                            }catch(InterruptedException e){}
-//                        }
-//                        h.sendEmptyMessage(HANDLER_MSG_STOP_PROGRESS_BAR);
+                        });
+                        threadSendMeasurementMessage.start();
                     }
                 });
                 threadSendMessage.start();
@@ -369,6 +350,8 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
         if (mPort != null) {
             try {
                 mPort.close();
+                //TODO reset progress bar
+                progressBar.setProgress(0);
             } catch (IOException e) {
                 // Ignore.
             }
@@ -380,10 +363,11 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
     @Override
     public void onSaveInstanceState(Bundle savedInstanceState){
         /* Saving variables*/
-        savedInstanceState.putBoolean(IS_CONNECTED_KEY, isConnected);
+//        savedInstanceState.putBoolean(IS_CONNECTED_KEY, isConnected);
         //TODO add saving viewText value
         //TODO add saving measured values int[]
         //TODO add saving hi or low measure position of radioButton
+
         /* Call at the end*/
         super.onSaveInstanceState(savedInstanceState);
     }
