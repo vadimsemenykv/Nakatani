@@ -19,7 +19,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.RadioButton;
-import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -33,9 +32,9 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
-public class CalibrationActivity extends Activity implements View.OnClickListener{
+public class CalibrationActivity extends Activity implements View.OnClickListener {
     //TODO add database support
     private final String TAG = CalibrationActivity.class.getSimpleName();
     private static final String ACTION_USB_PERMISSION = "com.vadim.nakatani.activitys.CalibrationActivity";
@@ -63,16 +62,24 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
     private static final int HANDLER_MSG_UPDATE_MEASUREMENT_TEXT_FIELDS = 4;
     private static final int HANDLER_MSG_ENABLE_RADIO_BUTTONS = 5;
     private static final int HANDLER_MSG_DISABLE_RADIO_BUTTONS = 6;
+    private static final int HANDLER_MSG_SHOW_DEV_NOT_CON_DIALOG = 7;
 
     /**
      * KEY to add arguments in bundle
      */
-    private static final String IS_CONNECTED_KEY = "is connected";
+    private static final String RADIO_BUTTON_POSITION = "radio button position";
+    private static final String VALUE_HIGH_OLD = "value high old";
+    private static final String VALUE_HIGH_NEW = "value high new";
+    private static final String VALUE_LOW_OLD = "value low old";
+    private static final String VALUE_LOW_NEW = "value low new";
+    //TODO Maybe in future will use this to save measurement process state
+//    private static final String IS_WAS_IN_MEASUREMENT_PROCESS = "was measurement process";
 
-
-    private AtomicBoolean permissionDialogAnswered = new AtomicBoolean(false);
+    //TODO Maybe in future will use this to save measurement process state
+//    private AtomicBoolean isWasInMeasurementProcess = new AtomicBoolean(false);
+    private AtomicInteger permissionDialogAnswered = new AtomicInteger(0);
+    private AtomicInteger isHiMessageWasReceaved = new AtomicInteger(0);
     private volatile boolean isConnected;
-    private AtomicBoolean isHiMessageWasReceaved = new AtomicBoolean(false);
     private String measurementPosition = MEASUREMENT_POSITION_LOW;
 
     private int highValue;
@@ -82,14 +89,13 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
     RadioButton radioButtonHi;
     RadioButton radioButtonLow;
     Button buttonStart;
+    Button buttonOk;
     TextView textHiValueNew;
     TextView textHiValueOld;
     TextView textLowValueNew;
     TextView textLowValueOld;
+    TextView textCalibrationHelp;
     ProgressBar progressBar;
-
-    private TextView mDumpTextView;
-    private ScrollView mScrollView;
 
     private Handler h;
 
@@ -108,16 +114,18 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
             if (ACTION_USB_PERMISSION.equals(action)) {
-            synchronized (this) {
+                synchronized (this) {
                     mDevice = (UsbDevice) intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
                     if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
                         if (mDevice != null) {
-                            permissionDialogAnswered.set(true);
+//                            permissionDialogAnswered.set(true);
+                            permissionDialogAnswered.set(1);
                             openDevicePort();
                         }
                     } else {
                         Toast.makeText(context, "permission denied for device " + mDevice, Toast.LENGTH_LONG).show();
-                        permissionDialogAnswered.set(true);
+                        permissionDialogAnswered.set(2);
+//                        permissionDialogAnswered.set(true);
                     }
                 }
             }
@@ -135,13 +143,19 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
         /**
          * restore arguments from bundle
          */
-        isConnected = ((savedInstanceState != null) && savedInstanceState.containsKey(IS_CONNECTED_KEY))?savedInstanceState.getBoolean(IS_CONNECTED_KEY):false;
+        measurementPosition = ((savedInstanceState != null) && savedInstanceState.containsKey(RADIO_BUTTON_POSITION)) ? savedInstanceState.getString(RADIO_BUTTON_POSITION) : MEASUREMENT_POSITION_LOW;
+        String valueHighOld = ((savedInstanceState != null) && savedInstanceState.containsKey(VALUE_HIGH_OLD)) ? savedInstanceState.getString(VALUE_HIGH_OLD) : "0";
+        String valueHighNew = ((savedInstanceState != null) && savedInstanceState.containsKey(VALUE_HIGH_NEW)) ? savedInstanceState.getString(VALUE_HIGH_NEW) : "0";
+        String valueLowOld = ((savedInstanceState != null) && savedInstanceState.containsKey(VALUE_LOW_OLD)) ? savedInstanceState.getString(VALUE_LOW_OLD) : "0";
+        String valueLowNew = ((savedInstanceState != null) && savedInstanceState.containsKey(VALUE_LOW_NEW)) ? savedInstanceState.getString(VALUE_LOW_NEW) : "0";
 
         /**
          * initialize UI variables
          */
         buttonStart = (Button) findViewById(R.id.button_calibration_start);
         buttonStart.setOnClickListener(this);
+        buttonOk = (Button) findViewById(R.id.button_calibration_ok);
+        buttonOk.setOnClickListener(this);
         radioButtonHi = (RadioButton) findViewById(R.id.radio_button_calibration_hi);
         radioButtonLow = (RadioButton) findViewById(R.id.radio_button_calibration_low);
         View.OnClickListener radioListener = new View.OnClickListener() {
@@ -153,11 +167,13 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
                         radioButtonHi.setChecked(true);
                         radioButtonLow.setChecked(false);
                         measurementPosition = MEASUREMENT_POSITION_HIGH;
+                        textCalibrationHelp.setText(R.string.calibration_text_help_high);
                         break;
                     case R.id.radio_button_calibration_low:
                         radioButtonHi.setChecked(false);
                         radioButtonLow.setChecked(true);
                         measurementPosition = MEASUREMENT_POSITION_LOW;
+                        textCalibrationHelp.setText(R.string.calibration_text_help_low);
                         break;
                     default:
                         break;
@@ -168,17 +184,21 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
         radioButtonLow.setOnClickListener(radioListener);
 
         textHiValueNew = (TextView) findViewById(R.id.textView_calibration_hi_value_new);
+        textHiValueNew.setText(valueHighNew);
+
         textHiValueOld = (TextView) findViewById(R.id.textView_calibration_hi_value_old);
+        textHiValueOld.setText(valueHighOld);
+
         textLowValueNew = (TextView) findViewById(R.id.textView_calibration_low_value_new);
+        textLowValueNew.setText(valueLowNew);
+
         textLowValueOld = (TextView) findViewById(R.id.textView_calibration_low_value_old);
+        textLowValueOld.setText(valueLowOld);
+
+        textCalibrationHelp = (TextView) findViewById(R.id.textView_calibration_help);
 
         progressBar = (ProgressBar) findViewById(R.id.progressBarCallibration);
         progressBar.setMax(100);
-
-//        startProgressBar(true);
-
-        mDumpTextView = (TextView) findViewById(R.id.textViewdfdf);
-        mScrollView = (ScrollView) findViewById(R.id.scrollView);
 
         /**
          * initialize USB manager
@@ -188,7 +208,7 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
         IntentFilter filter = new IntentFilter(ACTION_USB_PERMISSION);
         registerReceiver(mUsbReceiver, filter);
 
-        h = new Handler(){
+        h = new Handler() {
             public void handleMessage(android.os.Message msg) {
                 // обновляем TextView
                 switch (msg.what) {
@@ -213,6 +233,9 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
                     case HANDLER_MSG_DISABLE_RADIO_BUTTONS:
                         enableRadioButtons(false);
                         break;
+                    case HANDLER_MSG_SHOW_DEV_NOT_CON_DIALOG:
+                        //TODO call dialog
+//                        Toast.makeText(getApplicationContext(), (String)msg.obj, Toast.LENGTH_SHORT).show();
                     default:
                         break;
                 }
@@ -245,98 +268,123 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.button_calibration_start:
-                if (!isConnected) {
-                    findUSBDevices();
-                }
-
-                //TODO process if device will be detach
-
-                Thread threadSendMessage = new Thread(new Runnable(){
-
-                    @Override
-                    public void run() {
-                        h.sendEmptyMessage(HANDLER_MSG_START_PROGRESS_BAR);
-                        h.sendEmptyMessage(HANDLER_MSG_DISABLE_BUTTON);
-                        h.sendEmptyMessage(HANDLER_MSG_DISABLE_RADIO_BUTTONS);
-
-                        if (!isHiMessageWasReceaved.get()) {
-                            Thread threadSendHiMessage = new Thread(new MuRunnable(permissionDialogAnswered) {
-                                @Override
-                                public void run() {
-                                    while (true) {
-                                        if (permissionDialogAnswered.get() == true) break;
-                                    }
-
-                                    int i = 0;
-                                    while (i < 5) {
-                                        if (isHiMessageWasReceaved.get() == true) break;
-                                        try {
-                                            TimeUnit.MILLISECONDS.sleep(100);
-                                        } catch (InterruptedException e) {
-        //                                e.printStackTrace();
-                                        }
-                                        if (isConnected) {
-                                            h.post(sendHiMessage);
-                                        }
-                                        i++;
-                                    }
-                                }
-                            });
-                            threadSendHiMessage.start();
-
-                            if (threadSendHiMessage.isAlive()) {
-                                try{
-                                    threadSendHiMessage.join();
-                                }catch(InterruptedException e){}
-                            }
-                        }
-
-                        //TODO add saving that measurement is in process, to continue it after rotation
-
-                        //TODO maybe add new thread/process in this to interrupt this both if they will not answer for a long time and enable buttons end etc.
-
-                        Thread threadSendMeasurementMessage = new Thread(new MuRunnable(isHiMessageWasReceaved) {
-                            @Override
-                            public void run() {
-                                while (true) {
-                                    if (isHiMessageWasReceaved.get() == true) break;
-                                }
-
-                                int i = 0;
-                                while (i < 20) {
-                                    try {
-                                        TimeUnit.MILLISECONDS.sleep(100);
-                                    } catch (InterruptedException e) {
-        //                                e.printStackTrace();
-                                    }
-                                    if (isConnected) {
-                                        h.post(sendMeasurementMessage);
-                                    }
-                                    i++;
-                                }
-
-                                h.sendEmptyMessage(HANDLER_MSG_STOP_PROGRESS_BAR);
-                                h.sendEmptyMessage(HANDLER_MSG_ENABLE_BUTTON);
-                                h.sendEmptyMessage(HANDLER_MSG_ENABLE_RADIO_BUTTONS);
-                                h.sendEmptyMessage(HANDLER_MSG_UPDATE_MEASUREMENT_TEXT_FIELDS);
-                            }
-                        });
-                        threadSendMeasurementMessage.start();
-                    }
-                });
-                threadSendMessage.start();
+                processStartButtonClick();
+                break;
+            case R.id.button_calibration_ok:
+                //TODO here will be saving to database
                 break;
             default:
                 break;
         }
     }
 
-    private class MuRunnable implements Runnable{
-        AtomicBoolean permissionDialogAnswered;
+    private void processStartButtonClick() {
+        if (!isConnected) {
+            findUSBDevices();
+        }
+
+        Thread threadSendMessage = new Thread(new MyRunnable(permissionDialogAnswered) {
+            @Override
+            public void run() {
+                while (true) {
+                    if (permissionDialogAnswered.get() == 1 || permissionDialogAnswered.get() == 2) break;
+                }
+//                interrupter.start();
+                if (permissionDialogAnswered.get() == 1) {
+                    h.sendEmptyMessage(HANDLER_MSG_START_PROGRESS_BAR);
+                    h.sendEmptyMessage(HANDLER_MSG_DISABLE_BUTTON);
+                    h.sendEmptyMessage(HANDLER_MSG_DISABLE_RADIO_BUTTONS);
+
+                    if (isHiMessageWasReceaved.get() == 0) {
+                        final Thread threadSendHiMessage = new Thread(new MyRunnable(isHiMessageWasReceaved) {
+                            @Override
+                            public void run() {
+//                                    while (true) {
+//                                        if (permissionDialogAnswered.get() == 1) break;
+//                                    }
+
+                                int i = 0;
+                                while (i < 5) {
+                                    if (isHiMessageWasReceaved.get() == 1) break;
+                                    try {
+                                        TimeUnit.MILLISECONDS.sleep(100);
+                                        if (isConnected) {
+                                            sendHiMessage();
+                                        }
+                                        i++;
+                                    } catch (InterruptedException e) {
+                                        //                                e.printStackTrace();
+                                    }
+                                }
+                            }
+                        });
+                        threadSendHiMessage.start();
+
+                        if (threadSendHiMessage.isAlive()) {
+                            try {
+                                threadSendHiMessage.join();
+                            } catch (InterruptedException e) {
+                            }
+                        }
+                    }
+
+                    //TODO maybe add new thread/process in this to interrupt this both if they will not answer for a long time and enable buttons end etc.
+
+                    if (isHiMessageWasReceaved.get() == 1) {
+                        Thread threadSendMeasurementMessage = new Thread(new MyRunnable(isHiMessageWasReceaved) {
+                            @Override
+                            public void run() {
+//                            while (true) {
+//                                if (isHiMessageWasReceaved.get() == 1) break;
+//                            }
+
+                                int i = 0;
+                                while (i < 35) {
+                                    try {
+                                        TimeUnit.MILLISECONDS.sleep(100);
+                                    } catch (InterruptedException e) {
+                                        //                                e.printStackTrace();
+                                    }
+                                    if (isConnected) {
+                                        sendMeasurementMessage();
+//                                        h.post(sendMeasurementMessage);
+                                    }
+                                    i++;
+                                }
+
+//                                h.sendEmptyMessage(HANDLER_MSG_STOP_PROGRESS_BAR);
+//                                h.sendEmptyMessage(HANDLER_MSG_ENABLE_BUTTON);
+//                                h.sendEmptyMessage(HANDLER_MSG_ENABLE_RADIO_BUTTONS);
+                                h.sendEmptyMessage(HANDLER_MSG_UPDATE_MEASUREMENT_TEXT_FIELDS);
+                            }
+                        });
+                        threadSendMeasurementMessage.start();
+                    } else {
+                        //TODO call dialog that device is no connected and isConnected = false and etc.
+                        h.obtainMessage(HANDLER_MSG_SHOW_DEV_NOT_CON_DIALOG, (Object) "Device is not connected");
+                    }
+                    h.sendEmptyMessage(HANDLER_MSG_STOP_PROGRESS_BAR);
+                    h.sendEmptyMessage(HANDLER_MSG_ENABLE_BUTTON);
+                    h.sendEmptyMessage(HANDLER_MSG_ENABLE_RADIO_BUTTONS);
+                }
+            }
+        });
+        if (mPort != null) {
+            threadSendMessage.start();
+        } else {
+            Toast.makeText(getApplicationContext(), "Device is not connected", Toast.LENGTH_SHORT).show();
+            isConnected = false;
+            isHiMessageWasReceaved.set(0);
+            permissionDialogAnswered.set(0);
+        }
+    }
+
+    private class MyRunnable implements Runnable {
+        AtomicInteger permissionDialogAnswered;
 //        AtomicBoolean isHiMessageWasReceaved;
 
-        public MuRunnable(AtomicBoolean ab1/*, AtomicBoolean ab2*/) {
-            this.permissionDialogAnswered = ab1;
+        public MyRunnable(AtomicInteger ai1/*, AtomicBoolean ab2*/) {
+            this.permissionDialogAnswered = ai1;
 //            this.isHiMessageWasReceaved = ab2;
         }
 
@@ -351,8 +399,6 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
         if (mPort != null) {
             try {
                 mPort.close();
-                //TODO reset progress bar this is not work
-                progressBar.setProgress(0);
             } catch (IOException e) {
                 // Ignore.
             }
@@ -362,28 +408,31 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
     }
 
     @Override
-    public void onSaveInstanceState(Bundle savedInstanceState){
+    public void onSaveInstanceState(Bundle savedInstanceState) {
         progressBar.setProgress(0);
         /* Saving variables*/
-//        savedInstanceState.putBoolean(IS_CONNECTED_KEY, isConnected);
-        //TODO add saving viewText value
-        //TODO add saving measured values int[]
-        //TODO add saving hi or low measure position of radioButton
-
+        savedInstanceState.putString(RADIO_BUTTON_POSITION, measurementPosition);
+        savedInstanceState.putString(VALUE_HIGH_OLD, textHiValueOld.getText().toString());
+        savedInstanceState.putString(VALUE_HIGH_NEW, textHiValueNew.getText().toString());
+        savedInstanceState.putString(VALUE_LOW_OLD, textLowValueOld.getText().toString());
+        savedInstanceState.putString(VALUE_LOW_NEW, textLowValueOld.getText().toString());
+        //TODO Maybe in future will use this to save measurement process state
+//        savedInstanceState.putBoolean(IS_WAS_IN_MEASUREMENT_PROCESS, isConnected);
         /* Call at the end*/
         super.onSaveInstanceState(savedInstanceState);
     }
 
     private synchronized void updateReceivedData(byte[] data) {
-        isHiMessageWasReceaved.set(true);
+//        isHiMessageWasReceaved.set(true);
         final String msg = new String(data);
 //        mDumpTextView.append(msg + "\n\n");
         /**
          * process hi message
          */
         if (msg.indexOf(START_RECEIVED_MESSAGE_HI) == 0) {
-            if (msg.equals("I44V_IPDMini v1.6 Copyright(c)2004-2005 Valeriy V. Vishnyak, MEDINTECHO")) isHiMessageWasReceaved.set(true);
-            mDumpTextView.append(msg + "\n\n");
+//            if (msg.equals("I44V_IPDMini v1.6 Copyright(c)2004-2005 Valeriy V. Vishnyak, MEDINTECHO"))
+                isHiMessageWasReceaved.set(1);
+//            mDumpTextView.append(msg + "\n\n");
         }
         /**
          * process measurement message
@@ -416,11 +465,10 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
                 if (verification == valueCheck) {
                     int value = Integer.parseInt(msgData, 16);
                     measuredValues.add(value);
-//                    textLowValueNew.setText(String.valueOf(value));
                 }
             }
         }
-        mScrollView.smoothScrollTo(0, mDumpTextView.getBottom());
+//        mScrollView.smoothScrollTo(0, mDumpTextView.getBottom());
     }
 
     private void findUSBDevices() {
@@ -460,7 +508,7 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
             mPort.open(mConnection);
             mPort.setParameters(9600, 8, UsbSerialPort.STOPBITS_1, UsbSerialPort.PARITY_NONE);
             isConnected = true;
-        }catch (IOException e) {
+        } catch (IOException e) {
             Log.e(TAG, "Error setting up device: " + e.getMessage(), e);
             try {
                 mPort.close();
@@ -471,34 +519,39 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
         }
     }
 
-//    private void sendHiMessage() {
-    Runnable sendHiMessage = new Runnable() {
-        @Override
-        public void run() {
-            if (mPort != null) {
+    private void sendHiMessage() {
+//    Runnable sendHiMessage = new Runnable() {
+//        @Override
+//        public void run() {
+        if (mPort != null) {
+            try {
+                mPort.write(MESSAGE_HI, 1000);
+                int len = mPort.read(mReadBuffer.array(), READ_WAIT_MILLIS);
+                final byte[] data = new byte[len];
+                mReadBuffer.get(data, 0, len);
+                updateReceivedData(data);
+                mReadBuffer.clear();
+            } catch (IOException e) {
                 try {
-                    mPort.write(MESSAGE_HI,1000);
-                    int len = mPort.read(mReadBuffer.array(), READ_WAIT_MILLIS);
-                    final byte[] data = new byte[len];
-                    mReadBuffer.get(data, 0, len);
-                    updateReceivedData(data);
-                    mReadBuffer.clear();
-                }catch (IOException e) {
-                    try {
-                        mPort.close();
-                    } catch (IOException e2) {
-                        // Ignore.
-                    }
-                    mPort = null;
+                    mPort.close();
+                } catch (IOException e2) {
+                    // Ignore.
                 }
+                mPort = null;
             }
+        } else {
+            isConnected = false;
+            isHiMessageWasReceaved.set(0);
+            permissionDialogAnswered.set(0);
         }
-    };
+//        }
+//    };
+    }
 
-//    private void sendMeasurementMessage() {
-    Runnable sendMeasurementMessage = new Runnable() {
-        @Override
-        public void run() {
+        private void sendMeasurementMessage() {
+//    Runnable sendMeasurementMessage = new Runnable() {
+//        @Override
+//        public void run() {
             if (mPort != null) {
                 try {
                     mPort.write(MESSAGE_GET_MEASURED_VALUE, 1000);
@@ -515,9 +568,14 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
                     }
                     mPort = null;
                 }
+            } else {
+                isConnected = false;
+                isHiMessageWasReceaved.set(0);
+                permissionDialogAnswered.set(0);
             }
-        }
-    };
+//        }
+//    };
+    }
 
     private void startProgressBar(boolean action) {
         if (action) {
@@ -547,22 +605,34 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
     }
 
     private void updateMeasurementFields() {
-        if ( measurementPosition.equals(MEASUREMENT_POSITION_LOW)) {
-            int val = 0;
-            for (Integer i : measuredValues) {
-                val = (val < i)?i:val;
+        if (mPort != null) {
+            if (measuredValues.size() == 35) {
+                if ( measurementPosition.equals(MEASUREMENT_POSITION_LOW)) {
+                    int val = 0;
+                    for (Integer i : measuredValues) {
+                        val = (val < i)?i:val;
+                    }
+                    textLowValueNew.setText(String.valueOf(val));
+                    textLowValueOld.setText(String.valueOf(val));
+                }
+                if ( measurementPosition.equals(MEASUREMENT_POSITION_HIGH)) {
+                    int val = 0;
+                    for (Integer i : measuredValues) {
+                        val = (val < i)?i:val;
+                    }
+                    textHiValueNew.setText(String.valueOf(val));
+                    textHiValueOld.setText(String.valueOf(val));
+                }
+            } else {
+                Toast.makeText(getApplicationContext(), "Device is not connected", Toast.LENGTH_SHORT).show();
             }
-            textLowValueNew.setText(String.valueOf(val));
-            textLowValueOld.setText(String.valueOf(val));
+
+        } else {
+            isConnected = false;
+            isHiMessageWasReceaved.set(0);
+            permissionDialogAnswered.set(0);
         }
-        if ( measurementPosition.equals(MEASUREMENT_POSITION_HIGH)) {
-            int val = 0;
-            for (Integer i : measuredValues) {
-                val = (val < i)?i:val;
-            }
-            textHiValueNew.setText(String.valueOf(val));
-            textHiValueOld.setText(String.valueOf(val));
-        }
+        measuredValues.clear();
     }
 
     private void enableRadioButtons(boolean action) {

@@ -11,12 +11,18 @@
     <string name="refreshing">Refreshing...</string>
     <string name="app_title">USB Serial Example</string>
 
+    <!--Text-->
+    <string name="calibration_text_help">Для выполнения калибровки последовательно выбирите "Верхний предел" и "Нижний предел"</string>
+    <string name="calibration_text_help_low">Разомкните контакты датчика и удерживайте их разомкнутыми до окончания времени измерения</string>
+    <string name="calibration_text_help_high">Замкните контакты датчика и удерживайте их замкнутыми до окончания времени измерения</string>
+
     <!-- Testing Fragment -->
     <string name="button_test_for_patient">Тестирование для пациента</string>
     <string name="button_test_anonymous">Анонимное тестирование</string>
     <string name="button_test_calibration">Калибровать аппарат</string>
     <!-- Calibration Activity -->
     <string name="button_calibration_start">Старт</string>
+    <string name="button_calibration_ok">Продолжить</string>
     <string name="radio_button_calibration_hi">Верхний предел</string>
     <string name="radio_button_calibration_low">Нижний предел</string>
 
