@@ -17,6 +17,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ProgressBar;
 import android.widget.RadioButton;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -25,20 +26,19 @@ import android.widget.Toast;
 import com.hoho.android.usbserial.driver.UsbSerialDriver;
 import com.hoho.android.usbserial.driver.UsbSerialPort;
 import com.hoho.android.usbserial.driver.UsbSerialProber;
-import com.hoho.android.usbserial.util.SerialInputOutputManager;
 import com.vadim.nakatani.R;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class CalibrationActivity extends Activity implements View.OnClickListener{
+    //TODO add database support
     private final String TAG = CalibrationActivity.class.getSimpleName();
-    private static final String ACTION_USB_PERMISSION = "com.android.example.USB_PERMISSION";
+    private static final String ACTION_USB_PERMISSION = "com.vadim.nakatani.activitys.CalibrationActivity";
 
     private static final int VENDOR_ID = 4292;
     private static final int PRODUCT_ID = 60000;
@@ -53,19 +53,31 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
     private static final String START_RECEIVED_MESSAGE_END_PACKAGE_TRANSMIT = "A";
     private static final String END_RECEIVED_MESSAGE = "O";
 
-    private static final String MEASUREMENT_POSITION_HI = "high";
+    private static final String MEASUREMENT_POSITION_HIGH = "high";
     private static final String MEASUREMENT_POSITION_LOW = "low";
+
+    private static final int HANDLER_MSG_ENABLE_BUTTON = 0;
+    private static final int HANDLER_MSG_DISABLE_BUTTON = 1;
+    private static final int HANDLER_MSG_START_PROGRESS_BAR = 2;
+    private static final int HANDLER_MSG_STOP_PROGRESS_BAR = 3;
+    private static final int HANDLER_MSG_UPDATE_MEASUREMENT_TEXT_FIELDS = 4;
+    private static final int HANDLER_MSG_ENABLE_RADIO_BUTTONS = 5;
+    private static final int HANDLER_MSG_DISABLE_RADIO_BUTTONS = 6;
 
     /**
      * KEY to add arguments in bundle
      */
     private static final String IS_CONNECTED_KEY = "is connected";
 
+
+    private AtomicBoolean permissionDialogAnswered = new AtomicBoolean(false);
     private volatile boolean isConnected;
-    private boolean isHiMessageWasSend;
-    private boolean isVerificatedHiMessage;
+    private AtomicBoolean isHiMessageWasReceaved = new AtomicBoolean(false);
     private String measurementPosition = MEASUREMENT_POSITION_LOW;
-    private int[] measuredValues = new int[5];
+
+    private int highValue;
+    private int lowValue;
+    private List<Integer> measuredValues = new ArrayList<Integer>();
 
     RadioButton radioButtonHi;
     RadioButton radioButtonLow;
@@ -74,6 +86,7 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
     TextView textHiValueOld;
     TextView textLowValueNew;
     TextView textLowValueOld;
+    ProgressBar progressBar;
 
     private TextView mDumpTextView;
     private ScrollView mScrollView;
@@ -95,41 +108,24 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
             if (ACTION_USB_PERMISSION.equals(action)) {
-                synchronized (this) {
-                    mDevice = (UsbDevice)intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
+            synchronized (this) {
+                    mDevice = (UsbDevice) intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
                     if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
-                        if(mDevice != null){
-                            onDeviceStateChange();
+                        if (mDevice != null) {
+                            permissionDialogAnswered.set(true);
                             openDevicePort();
                         }
-                    }
-                    else {
+                    } else {
                         Toast.makeText(context, "permission denied for device " + mDevice, Toast.LENGTH_LONG).show();
+                        permissionDialogAnswered.set(true);
                     }
                 }
             }
         }
     };
 
-    //TODO delete this block of code
-    private final ExecutorService mExecutor = Executors.newSingleThreadExecutor();
-    private SerialInputOutputManager mSerialIoManager;
-    private final SerialInputOutputManager.Listener mListener = new SerialInputOutputManager.Listener() {
-        @Override
-        public void onRunError(Exception e) {
-            Log.d(TAG, "Runner stopped.");
-        }
-
-        @Override
-        public void onNewData(final byte[] data) {
-            CalibrationActivity.this.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    CalibrationActivity.this.updateReceivedData(data);
-                }
-            });
-        }
-    };
+    private boolean progresBarDrawerState = false;
+    private Thread progresBarDrawer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -156,7 +152,7 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
                     case R.id.radio_button_calibration_hi:
                         radioButtonHi.setChecked(true);
                         radioButtonLow.setChecked(false);
-                        measurementPosition = MEASUREMENT_POSITION_HI;
+                        measurementPosition = MEASUREMENT_POSITION_HIGH;
                         break;
                     case R.id.radio_button_calibration_low:
                         radioButtonHi.setChecked(false);
@@ -176,6 +172,11 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
         textLowValueNew = (TextView) findViewById(R.id.textView_calibration_low_value_new);
         textLowValueOld = (TextView) findViewById(R.id.textView_calibration_low_value_old);
 
+        progressBar = (ProgressBar) findViewById(R.id.progressBarCallibration);
+        progressBar.setMax(100);
+
+//        startProgressBar(true);
+
         mDumpTextView = (TextView) findViewById(R.id.textViewdfdf);
         mScrollView = (ScrollView) findViewById(R.id.scrollView);
 
@@ -187,7 +188,36 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
         IntentFilter filter = new IntentFilter(ACTION_USB_PERMISSION);
         registerReceiver(mUsbReceiver, filter);
 
-        h = new Handler();
+        h = new Handler(){
+            public void handleMessage(android.os.Message msg) {
+                // обновляем TextView
+                switch (msg.what) {
+                    case HANDLER_MSG_ENABLE_BUTTON:
+                        buttonStart.setEnabled(true);
+                        break;
+                    case HANDLER_MSG_DISABLE_BUTTON:
+                        buttonStart.setEnabled(false);
+                        break;
+                    case HANDLER_MSG_START_PROGRESS_BAR:
+                        startProgressBar(true);
+                        break;
+                    case HANDLER_MSG_STOP_PROGRESS_BAR:
+                        startProgressBar(false);
+                        break;
+                    case HANDLER_MSG_UPDATE_MEASUREMENT_TEXT_FIELDS:
+                        updateMeasurementFields();
+                        break;
+                    case HANDLER_MSG_ENABLE_RADIO_BUTTONS:
+                        enableRadioButtons(true);
+                        break;
+                    case HANDLER_MSG_DISABLE_RADIO_BUTTONS:
+                        enableRadioButtons(false);
+                        break;
+                    default:
+                        break;
+                }
+            }
+        };
     }
 
     @Override
@@ -219,63 +249,97 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
                     findUSBDevices();
                 }
 
-//                if (isConnected && !isHiMessageWasSend) {
-//                    if (mPort != null) {
-//                        try {
-//                            int i = 0;
-//                            while ( i < 10) {
-//                                sendHiMessage();
-//                                TimeUnit.MILLISECONDS.sleep(400);
-//                                if (isHiMessageWasSend) i = 100;
-//                                i++;
-//                            }
-//                            if (!isHiMessageWasSend) {
-//                                //TODO here must be dialog
-//                                Toast.makeText(getApplicationContext(), "Не получилось подключится к прибору + \n" +
-//                                        "Проверьте подключение", Toast.LENGTH_SHORT).show();
-//                                isConnected = false;
-//                            }
-//                        } catch (InterruptedException e) {
-////                            e.printStackTrace();
-//                        }
-//                    }else {
-//                        isConnected = false;
-//                    }
-//                }
+                Thread threadSendMessage = new Thread(new Runnable(){
 
-//                buttonStart.setEnabled(false);
-                //TODO add check mPort != null else isConnected = false
-                //TODO add check if port == null here or in sendMeasurementMessage() method;
-                //TODO change this on handler/OnUI......run to use buttonStart.setEnabled(true) in the end of run;
-                Thread threadSendMessage = new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        int i = 0;
-                        //TODO add some check if to long no any answer
-                        while (i < 50) {
-                            if (!isConnected) {
+
+
+
+                h.sendEmptyMessage(HANDLER_MSG_START_PROGRESS_BAR);
+                h.sendEmptyMessage(HANDLER_MSG_DISABLE_BUTTON);
+                h.sendEmptyMessage(HANDLER_MSG_DISABLE_RADIO_BUTTONS);
+
+                if (!isHiMessageWasReceaved.get()) {
+                    Thread threadSendHiMessage = new Thread(new MuRunnable(permissionDialogAnswered) {
+                        @Override
+                        public void run() {
+                            while (true) {
+                                if (permissionDialogAnswered.get() == true) break;
+                            }
+
+//                            h.sendEmptyMessage(HANDLER_MSG_START_PROGRESS_BAR);
+//                            h.sendEmptyMessage(HANDLER_MSG_DISABLE_BUTTON);
+//                            h.sendEmptyMessage(HANDLER_MSG_DISABLE_RADIO_BUTTONS);
+
+                            int i = 0;
+                            while (i < 5) {
+                                if (isHiMessageWasReceaved.get() == true) break;
                                 try {
                                     TimeUnit.MILLISECONDS.sleep(100);
                                 } catch (InterruptedException e) {
-//                                    e.printStackTrace();
+//                                e.printStackTrace();
+                                }
+                                if (isConnected) {
+                                    h.post(sendHiMessage);
                                 }
                                 i++;
                             }
-                            if (isConnected) break;
+
+//                            h.sendEmptyMessage(HANDLER_MSG_STOP_PROGRESS_BAR);
+//                            h.sendEmptyMessage(HANDLER_MSG_ENABLE_BUTTON);
+//                            h.sendEmptyMessage(HANDLER_MSG_ENABLE_RADIO_BUTTONS);
                         }
-                        i = 0;
-                        while (i < 5) {
+                    });
+                    threadSendHiMessage.start();
+
+                    if (threadSendHiMessage.isAlive()) {
+                        try{
+                            threadSendHiMessage.join();
+                        }catch(InterruptedException e){}
+                    }
+                }
+
+
+                //TODO maybe add new thread to interapt this both if they will not answer for a long time and enable buttons end etc.
+
+                Thread threadSendMeasurementMessage = new Thread(new MuRunnable(isHiMessageWasReceaved) {
+                    @Override
+                    public void run() {
+//                        if (!progresBarDrawer.isAlive()) h.sendEmptyMessage(HANDLER_MSG_START_PROGRESS_BAR);
+//                        h.sendEmptyMessage(HANDLER_MSG_DISABLE_BUTTON);
+//                        h.sendEmptyMessage(HANDLER_MSG_DISABLE_RADIO_BUTTONS);
+
+                        while (true) {
+                            if (isHiMessageWasReceaved.get() == true) break;
+                        }
+
+                        int i = 0;
+                        while (i < 20) {
                             try {
                                 TimeUnit.MILLISECONDS.sleep(100);
                             } catch (InterruptedException e) {
 //                                e.printStackTrace();
                             }
                             if (isConnected) {
-//                                sendHiMessage();
-                                h.post(sendHiMessage);
+                                h.post(sendMeasurementMessage);
                             }
                             i++;
                         }
+
+                        h.sendEmptyMessage(HANDLER_MSG_STOP_PROGRESS_BAR);
+                        h.sendEmptyMessage(HANDLER_MSG_ENABLE_BUTTON);
+                        h.sendEmptyMessage(HANDLER_MSG_ENABLE_RADIO_BUTTONS);
+                        h.sendEmptyMessage(HANDLER_MSG_UPDATE_MEASUREMENT_TEXT_FIELDS);
+                    }
+                });
+                threadSendMeasurementMessage.start();
+//                        if (threadSendMeasurementMessage.isAlive()) {
+//                            try{
+//                                threadSendMeasurementMessage.join();
+//                            }catch(InterruptedException e){}
+//                        }
+//                        h.sendEmptyMessage(HANDLER_MSG_STOP_PROGRESS_BAR);
                     }
                 });
                 threadSendMessage.start();
@@ -285,9 +349,23 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
         }
     }
 
+    private class MuRunnable implements Runnable{
+        AtomicBoolean permissionDialogAnswered;
+//        AtomicBoolean isHiMessageWasReceaved;
+
+        public MuRunnable(AtomicBoolean ab1/*, AtomicBoolean ab2*/) {
+            this.permissionDialogAnswered = ab1;
+//            this.isHiMessageWasReceaved = ab2;
+        }
+
+        @Override
+        public void run() {
+
+        }
+    }
+
     @Override
     protected void onDestroy() {
-        stopIoManager();
         if (mPort != null) {
             try {
                 mPort.close();
@@ -310,38 +388,23 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
         super.onSaveInstanceState(savedInstanceState);
     }
 
-    private void stopIoManager() {
-        if (mSerialIoManager != null) {
-            Log.i(TAG, "Stopping io manager ..");
-            mSerialIoManager.stop();
-            mSerialIoManager = null;
-        }
-    }
-
-    private void startIoManager() {
-        if (mPort != null) {
-            Log.i(TAG, "Starting io manager ..");
-            mSerialIoManager = new SerialInputOutputManager(mPort, mListener);
-            mExecutor.submit(mSerialIoManager);
-        }
-    }
-
-    private void onDeviceStateChange() {
-//        stopIoManager();
-//        startIoManager();
-    }
-
-    private void updateReceivedData(byte[] data) {
-        //TODO add hi message process
-        //TODO if hi message - set isConnected true
-        //TODO change hardcoded values onto variables
-//        isConnected = true;
-        isHiMessageWasSend = true;
+    private synchronized void updateReceivedData(byte[] data) {
+        isHiMessageWasReceaved.set(true);
         final String msg = new String(data);
-        mDumpTextView.append(msg + "\n\n");
-        if (msg.indexOf("G") == 0) {
-            int g_index = msg.indexOf("G");
-            int o_index = msg.indexOf("O");
+//        mDumpTextView.append(msg + "\n\n");
+        /**
+         * process hi message
+         */
+        if (msg.indexOf(START_RECEIVED_MESSAGE_HI) == 0) {
+            if (msg.equals("I44V_IPDMini v1.6 Copyright(c)2004-2005 Valeriy V. Vishnyak, MEDINTECHO")) isHiMessageWasReceaved.set(true);
+            mDumpTextView.append(msg + "\n\n");
+        }
+        /**
+         * process measurement message
+         */
+        if (msg.indexOf(START_RECEIVED_MESSAGE_MEASURED_VALUE) == 0) {
+            int g_index = msg.indexOf(START_RECEIVED_MESSAGE_MEASURED_VALUE);
+            int o_index = msg.lastIndexOf(END_RECEIVED_MESSAGE);
             int msg_length = msg.length();
 
             String msgData = "";
@@ -366,8 +429,8 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
 
                 if (verification == valueCheck) {
                     int value = Integer.parseInt(msgData, 16);
-                    textLowValueNew.setText(String.valueOf(value));
-//                    mDumpTextView.append(String.valueOf(value) + "\n\n");
+                    measuredValues.add(value);
+//                    textLowValueNew.setText(String.valueOf(value));
                 }
             }
         }
@@ -426,50 +489,98 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
     Runnable sendHiMessage = new Runnable() {
         @Override
         public void run() {
-            try {
-                mPort.write(MESSAGE_HI,1000);
-                int len = mPort.read(mReadBuffer.array(), READ_WAIT_MILLIS);
-                final byte[] data = new byte[len];
-                mReadBuffer.get(data, 0, len);
-                updateReceivedData(data);
-                mReadBuffer.clear();
-            }catch (IOException e) {
+            if (mPort != null) {
                 try {
-                    mPort.close();
-                } catch (IOException e2) {
-                    // Ignore.
+                    mPort.write(MESSAGE_HI,1000);
+                    int len = mPort.read(mReadBuffer.array(), READ_WAIT_MILLIS);
+                    final byte[] data = new byte[len];
+                    mReadBuffer.get(data, 0, len);
+                    updateReceivedData(data);
+                    mReadBuffer.clear();
+                }catch (IOException e) {
+                    try {
+                        mPort.close();
+                    } catch (IOException e2) {
+                        // Ignore.
+                    }
+                    mPort = null;
                 }
-                mPort = null;
             }
         }
     };
-//        try {
-//            mPort.write(MESSAGE_HI,1000);
-//            int len = mPort.read(mReadBuffer.array(), READ_WAIT_MILLIS);
-//            final byte[] data = new byte[len];
-//            mReadBuffer.get(data, 0, len);
-//            updateReceivedData(data);
-//            mReadBuffer.clear();
-//        }catch (IOException e) {
-//            try {
-//                mPort.close();
-//            } catch (IOException e2) {
-//                // Ignore.
-//            }
-//            mPort = null;
-//        }
-//    }
 
-    private void sendMeasurementMessage() {
-        try {
-            mPort.write(MESSAGE_GET_MEASURED_VALUE, 1000);
-        }catch (IOException e) {
-            try {
-                mPort.close();
-            } catch (IOException e2) {
-                // Ignore.
+//    private void sendMeasurementMessage() {
+    Runnable sendMeasurementMessage = new Runnable() {
+        @Override
+        public void run() {
+            if (mPort != null) {
+                try {
+                    mPort.write(MESSAGE_GET_MEASURED_VALUE, 1000);
+                    int len = mPort.read(mReadBuffer.array(), READ_WAIT_MILLIS);
+                    final byte[] data = new byte[len];
+                    mReadBuffer.get(data, 0, len);
+                    updateReceivedData(data);
+                    mReadBuffer.clear();
+                } catch (IOException e) {
+                    try {
+                        mPort.close();
+                    } catch (IOException e2) {
+                        // Ignore.
+                    }
+                    mPort = null;
+                }
             }
-            mPort = null;
         }
+    };
+
+    private void startProgressBar(boolean action) {
+        if (action) {
+            progresBarDrawer = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    int i = 0;
+                    while (!Thread.currentThread().isInterrupted()) {
+                        try {
+                            TimeUnit.MILLISECONDS.sleep(50);
+                            progressBar.setProgress(i);
+                            i += 3;
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                            progressBar.setProgress(0);
+                            break;
+                        }
+                        if (i > 100) i = 0;
+                    }
+                }
+            });
+            progresBarDrawer.start();
+        } else {
+            progresBarDrawer.interrupt();
+        }
+        progresBarDrawerState = action;
+    }
+
+    private void updateMeasurementFields() {
+        if ( measurementPosition.equals(MEASUREMENT_POSITION_LOW)) {
+            int val = 0;
+            for (Integer i : measuredValues) {
+                val = (val < i)?i:val;
+            }
+            textLowValueNew.setText(String.valueOf(val));
+            textLowValueOld.setText(String.valueOf(val));
+        }
+        if ( measurementPosition.equals(MEASUREMENT_POSITION_HIGH)) {
+            int val = 0;
+            for (Integer i : measuredValues) {
+                val = (val < i)?i:val;
+            }
+            textHiValueNew.setText(String.valueOf(val));
+            textHiValueOld.setText(String.valueOf(val));
+        }
+    }
+
+    private void enableRadioButtons(boolean action) {
+        radioButtonLow.setEnabled(action);
+        radioButtonHi.setEnabled(action);
     }
 }
