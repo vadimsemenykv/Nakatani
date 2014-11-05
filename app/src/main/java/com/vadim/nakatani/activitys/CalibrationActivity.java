@@ -13,10 +13,12 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.NavUtils;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.RadioButton;
 import android.widget.TextView;
@@ -82,8 +84,8 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
     private volatile boolean isConnected;
     private String measurementPosition = MEASUREMENT_POSITION_LOW;
 
-    private int highValue;
-    private int lowValue;
+    private int highCalibrationValue;
+    private int lowCalibrationValue;
     private List<Integer> measuredValues = new ArrayList<Integer>();
 
     RadioButton radioButtonHi;
@@ -97,6 +99,9 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
     TextView textCalibrationHelp;
     ProgressBar progressBar;
 
+    private boolean progresBarDrawerState = false;
+    private Thread progresBarDrawer;
+
     private Handler h;
 
     private static final int READ_WAIT_MILLIS = 200;
@@ -104,7 +109,7 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
     private final ByteBuffer mReadBuffer = ByteBuffer.allocate(BUFSIZ);
 
     private UsbSerialPort mPort;
-    private UsbSerialDriver mDriver;
+//    private UsbSerialDriver mDriver;
     private UsbDevice mDevice;
     private UsbManager mUsbManager;
     private UsbDeviceConnection mConnection;
@@ -119,11 +124,12 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
                     if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
                         if (mDevice != null) {
 //                            permissionDialogAnswered.set(true);
-                            permissionDialogAnswered.set(1);
+
                             openDevicePort();
                         }
                     } else {
-                        Toast.makeText(context, "permission denied for device " + mDevice, Toast.LENGTH_LONG).show();
+//                        Toast.makeText(context, "permission denied for device " + mDevice, Toast.LENGTH_LONG).show();
+                        showToast("Permission denied for device " + mDevice);
                         permissionDialogAnswered.set(2);
 //                        permissionDialogAnswered.set(true);
                     }
@@ -131,9 +137,6 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
             }
         }
     };
-
-    private boolean progresBarDrawerState = false;
-    private Thread progresBarDrawer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -233,9 +236,9 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
                     case HANDLER_MSG_DISABLE_RADIO_BUTTONS:
                         enableRadioButtons(false);
                         break;
-                    case HANDLER_MSG_SHOW_DEV_NOT_CON_DIALOG:
-                        //TODO call dialog
-//                        Toast.makeText(getApplicationContext(), (String)msg.obj, Toast.LENGTH_SHORT).show();
+//                    case HANDLER_MSG_SHOW_DEV_NOT_CON_DIALOG:
+//                        makeToast("jkkh");
+//                        break;
                     default:
                         break;
                 }
@@ -359,9 +362,17 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
                             }
                         });
                         threadSendMeasurementMessage.start();
+
+                        if (threadSendMeasurementMessage.isAlive()) {
+                            try {
+                                threadSendMeasurementMessage.join();
+                            } catch (InterruptedException e) {
+                            }
+                        }
                     } else {
-                        //TODO call dialog that device is no connected and isConnected = false and etc.
-                        h.obtainMessage(HANDLER_MSG_SHOW_DEV_NOT_CON_DIALOG, (Object) "Device is not connected");
+                        //TODO call dialog that device is not connected and isConnected = false and etc.
+//                        h.obtainMessage(HANDLER_MSG_SHOW_DEV_NOT_CON_DIALOG);
+                        showToast("Device is not connected");
                     }
                     h.sendEmptyMessage(HANDLER_MSG_STOP_PROGRESS_BAR);
                     h.sendEmptyMessage(HANDLER_MSG_ENABLE_BUTTON);
@@ -372,7 +383,8 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
         if (mPort != null) {
             threadSendMessage.start();
         } else {
-            Toast.makeText(getApplicationContext(), "Device is not connected", Toast.LENGTH_SHORT).show();
+//            Toast.makeText(getApplicationContext(), "Device is not connected", Toast.LENGTH_SHORT).show();
+            showToast("Device is not connected");
             isConnected = false;
             isHiMessageWasReceaved.set(0);
             permissionDialogAnswered.set(0);
@@ -430,8 +442,7 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
          * process hi message
          */
         if (msg.indexOf(START_RECEIVED_MESSAGE_HI) == 0) {
-//            if (msg.equals("I44V_IPDMini v1.6 Copyright(c)2004-2005 Valeriy V. Vishnyak, MEDINTECHO"))
-                isHiMessageWasReceaved.set(1);
+            if (msg.startsWith("I44V_EPDMini v1.6 Copyright (c)2004-2005")) isHiMessageWasReceaved.set(1);
 //            mDumpTextView.append(msg + "\n\n");
         }
         /**
@@ -490,7 +501,7 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
                 findDevice = true;
                 if (!isConnected) {
                     mPort = usp;
-                    mDriver = driver;
+//                    mDriver = driver;
                     mDevice = device;
 
                     mUsbManager.requestPermission(mDevice, mPermissionIntent);
@@ -508,6 +519,7 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
             mPort.open(mConnection);
             mPort.setParameters(9600, 8, UsbSerialPort.STOPBITS_1, UsbSerialPort.PARITY_NONE);
             isConnected = true;
+            permissionDialogAnswered.set(1);
         } catch (IOException e) {
             Log.e(TAG, "Error setting up device: " + e.getMessage(), e);
             try {
@@ -624,7 +636,7 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
                     textHiValueOld.setText(String.valueOf(val));
                 }
             } else {
-                Toast.makeText(getApplicationContext(), "Device is not connected", Toast.LENGTH_SHORT).show();
+                showToast("Device is not connected");
             }
 
         } else {
@@ -638,5 +650,20 @@ public class CalibrationActivity extends Activity implements View.OnClickListene
     private void enableRadioButtons(boolean action) {
         radioButtonLow.setEnabled(action);
         radioButtonHi.setEnabled(action);
+    }
+
+    private void showToast(final String msg)
+    {
+        runOnUiThread(new Runnable() {
+            public void run() {
+                Toast toast = Toast.makeText(CalibrationActivity.this, msg, Toast.LENGTH_SHORT);
+                toast.setGravity(Gravity.CENTER, 0, 0);
+                LinearLayout linearLayout = (LinearLayout) toast.getView();
+                TextView messageTextView = (TextView) linearLayout.getChildAt(0);
+                messageTextView.setTextSize(25);
+                toast.show();
+
+            }
+        });
     }
 }

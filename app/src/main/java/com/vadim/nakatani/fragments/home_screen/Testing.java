@@ -1,33 +1,14 @@
 package com.vadim.nakatani.fragments.home_screen;
 
-import android.content.Context;
 import android.content.Intent;
-import android.hardware.usb.UsbDevice;
-import android.hardware.usb.UsbDeviceConnection;
-import android.hardware.usb.UsbManager;
 import android.os.Bundle;
 import android.app.Fragment;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.ScrollView;
-import android.widget.TextView;
 
-import com.hoho.android.usbserial.driver.UsbSerialDriver;
-import com.hoho.android.usbserial.driver.UsbSerialPort;
-import com.hoho.android.usbserial.driver.UsbSerialProber;
-import com.hoho.android.usbserial.util.HexDump;
-import com.hoho.android.usbserial.util.SerialInputOutputManager;
 import com.vadim.nakatani.R;
-import com.vadim.nakatani.activitys.CalibrationActivity;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 
 /**
@@ -134,11 +115,11 @@ public class Testing extends Fragment implements View.OnClickListener {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_testing, container, false);
 
-        buttonTestPatient = (Button) rootView.findViewById(R.id.button_test_for_patient);
+        buttonTestPatient = (Button) rootView.findViewById(R.id.button_testing_test_for_patient);
         buttonTestPatient.setOnClickListener(this);
-        buttonTestAnonymous = (Button) rootView.findViewById(R.id.button_test_anonymous);
+        buttonTestAnonymous = (Button) rootView.findViewById(R.id.button_testing_test_anonymous);
         buttonTestAnonymous.setOnClickListener(this);
-        buttonCalibration = (Button) rootView.findViewById(R.id.button_test_calibration);
+        buttonCalibration = (Button) rootView.findViewById(R.id.button_testing_calibration);
         buttonCalibration.setOnClickListener(this);
         return rootView;
     }
@@ -195,17 +176,17 @@ public class Testing extends Fragment implements View.OnClickListener {
     public void onClick(View view) {
         int buttonId = view.getId();
         switch (buttonId) {
-            case R.id.button_test_for_patient:
+            case R.id.button_testing_test_for_patient:
 //                findUSBDevices();
                 //TODO if patient not set switch to cardFile fragment
                 Intent test = new Intent();
                 test.setClass(getActivity() , com.vadim.nakatani.activitys.TestActivity.class);
                 startActivity(test);
                 break;
-            case R.id.button_test_anonymous:
+            case R.id.button_testing_test_anonymous:
 //                connectToDevice();
                 break;
-            case R.id.button_test_calibration:
+            case R.id.button_testing_calibration:
                 Intent calibration = new Intent();
                 calibration.setClass(getActivity() , com.vadim.nakatani.activitys.CalibrationActivity.class);
                 startActivity(calibration);

@@ -17,14 +17,32 @@
     <string name="calibration_text_help_high">Замкните контакты датчика и удерживайте их замкнутыми до окончания времени измерения</string>
 
     <!-- Testing Fragment -->
-    <string name="button_test_for_patient">Тестирование для пациента</string>
-    <string name="button_test_anonymous">Анонимное тестирование</string>
-    <string name="button_test_calibration">Калибровать аппарат</string>
+    <string name="button_testing_for_patient">Тестирование для пациента</string>
+    <string name="button_testing_anonymous">Анонимное тестирование</string>
+    <string name="button_testing_calibration">Калибровать аппарат</string>
+
     <!-- Calibration Activity -->
     <string name="button_calibration_start">Старт</string>
     <string name="button_calibration_ok">Продолжить</string>
     <string name="radio_button_calibration_hi">Верхний предел</string>
     <string name="radio_button_calibration_low">Нижний предел</string>
+
+    <!-- Test Activity -->
+    <string name="button_test_start">Старт</string>
+    <string name="button_test_stop">Стоп</string>
+    <string name="button_test_prev">Назад</string>
+    <string name="button_test_next">Вперед</string>
+    <string name="button_test_reset">Сброс</string>
+    <string name="button_test_clear">Очистить</string>
+    <string name="button_test_calibration">Калибровать</string>
+    <string name="button_test_done">Далее</string>
+
+    <string name="text_view_vaue_now">Текущее значение</string>
+    <string name="text_view_value_max">Максимальное значение</string>
+    <string name="text_view_point_desc">Описание точки:</string>
+    <string name="text_view_point_name">Точки</string>
+    <string name="text_view_point_value_left">Слева</string>
+    <string name="text_view_point_value_right">Справа</string>
 
     <string-array name="screen_array">
         <item>Картотека</item>

@@ -30,7 +30,8 @@
         <activity
             android:name=".activitys.TestActivity"
             android:label="Test"
-            android:parentActivityName=".MainActivity" >
+            android:parentActivityName=".MainActivity"
+            android:windowSoftInputMode="stateHidden">
 
             <!-- Parent activity meta-data to support 4.0 and lower -->
             <meta-data
