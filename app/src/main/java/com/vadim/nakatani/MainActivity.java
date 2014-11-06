@@ -207,6 +207,7 @@ public class MainActivity extends ActionBarActivity {
 //        Log.e(this.getClass().getName(), "from selectItem mCurrentSelectedPosition = " + mCurrentSelectedPosition);
         Fragment fragment = null;
 //        fragment = ShowDataFromUSB.newInstance(this);
+        position = 2;
         switch (position) {
             case 0:
                 mTitle = mScreenTitles[mCurrentSelectedPosition];
