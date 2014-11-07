@@ -1,7 +1,5 @@
 package com.vadim.nakatani.fragments;
 
-import android.app.Activity;
-import android.net.Uri;
 import android.os.Bundle;
 import android.app.Fragment;
 import android.view.LayoutInflater;
@@ -12,15 +10,9 @@ import com.vadim.nakatani.R;
 
 
 /**
- * A simple {@link Fragment} subclass.
- * Activities that contain this fragment must implement the
- * {@link Leftmenu_private_info_block.OnFragmentInteractionListener} interface
- * to handle interaction events.
- * Use the {@link Leftmenu_private_info_block#newInstance} factory method to
- * create an instance of this fragment.
  *
  */
-public class Leftmenu_private_info_block extends Fragment {
+public class Leftmenu_private_info_blockFragment extends Fragment {
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
@@ -36,18 +28,18 @@ public class Leftmenu_private_info_block extends Fragment {
      *
      * @param param1 Parameter 1.
      * @param param2 Parameter 2.
-     * @return A new instance of fragment Leftmenu_private_info_block.
+     * @return A new instance of fragment Leftmenu_private_info_blockFragment.
      */
     // TODO: Rename and change types and number of parameters
-    public static Leftmenu_private_info_block newInstance(String param1, String param2) {
-        Leftmenu_private_info_block fragment = new Leftmenu_private_info_block();
+    public static Leftmenu_private_info_blockFragment newInstance(String param1, String param2) {
+        Leftmenu_private_info_blockFragment fragment = new Leftmenu_private_info_blockFragment();
         Bundle args = new Bundle();
         args.putString(ARG_PARAM1, param1);
         args.putString(ARG_PARAM2, param2);
         fragment.setArguments(args);
         return fragment;
     }
-    public Leftmenu_private_info_block() {
+    public Leftmenu_private_info_blockFragment() {
         // Required empty public constructor
     }
 

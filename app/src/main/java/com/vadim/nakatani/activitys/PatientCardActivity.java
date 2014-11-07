@@ -21,10 +21,10 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import com.vadim.nakatani.R;
-import com.vadim.nakatani.fragments.home_screen.CardFile;
-import com.vadim.nakatani.fragments.home_screen.Diagnostics;
-import com.vadim.nakatani.fragments.home_screen.MedicalHistory;
-import com.vadim.nakatani.fragments.home_screen.Testing;
+import com.vadim.nakatani.fragments.home_screen.CardFileFragment;
+import com.vadim.nakatani.fragments.home_screen.DiagnosticsFragment;
+import com.vadim.nakatani.fragments.home_screen.MedicalHistoryFragment;
+import com.vadim.nakatani.fragments.home_screen.TestingFragment;
 
 //import android.support.v4.app.FragmentTransaction;
 //import android.support.v4.app.Fragment;
@@ -56,7 +56,7 @@ public class PatientCardActivity extends ActionBarActivity {
         /**
          *  Restore arguments from bundle
          *  mCurrentSelectedPosition
-         *  cardFindAutoCompleteText for CardFile fragment
+         *  cardFindAutoCompleteText for CardFileFragment fragment
          */
         mCurrentSelectedPosition = ((savedInstanceState != null) && savedInstanceState.containsKey(ARG_SECTION_NUMBER))?savedInstanceState.getInt(ARG_SECTION_NUMBER):0;
         cardFindAutoCompleteText = ((savedInstanceState != null) && savedInstanceState.containsKey(SAVED_TEXT_KEY))?savedInstanceState.getString(SAVED_TEXT_KEY):"";
@@ -178,22 +178,22 @@ public class PatientCardActivity extends ActionBarActivity {
         switch (position) {
             case 0:
                 mTitle = mScreenTitles[mCurrentSelectedPosition];
-                fragment = CardFile.newInstance(cardFindAutoCompleteText);
+                fragment = CardFileFragment.newInstance(cardFindAutoCompleteText);
                 break;
             case 1:
                 mTitle = mScreenTitles[mCurrentSelectedPosition];
                 cardFindAutoCompleteText = "";
-                fragment = new MedicalHistory();
+                fragment = new MedicalHistoryFragment();
                 break;
             case 2:
                 mTitle = mScreenTitles[mCurrentSelectedPosition];
                 cardFindAutoCompleteText = "";
-                fragment = new Diagnostics();
+                fragment = new DiagnosticsFragment();
                 break;
             case 3:
                 mTitle = mScreenTitles[mCurrentSelectedPosition];
                 cardFindAutoCompleteText = "";
-                fragment = new Testing();
+                fragment = new TestingFragment();
                 break;
             default:
                 break;

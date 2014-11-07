@@ -27,13 +27,12 @@ import android.support.v4.app.ActionBarDrawerToggle;
 //import android.support.v4.widget.DrawerLayout;
 import android.view.MenuInflater;
 
-import com.vadim.nakatani.activitys.TestActivity;
+import com.vadim.nakatani.activitys.MyActivity;
 import com.vadim.nakatani.entity.PatientEntity;
-import com.vadim.nakatani.fragments.home_screen.CardFile;
-import com.vadim.nakatani.fragments.home_screen.Diagnostics;
-import com.vadim.nakatani.fragments.home_screen.MedicalHistory;
+import com.vadim.nakatani.fragments.home_screen.CardFileFragment;
+import com.vadim.nakatani.fragments.home_screen.MedicalHistoryFragment;
 import com.vadim.nakatani.fragments.PatientPrivateInfo;
-import com.vadim.nakatani.fragments.home_screen.Testing;
+import com.vadim.nakatani.fragments.home_screen.TestingFragment;
 
 
 public class MainActivity extends ActionBarActivity {
@@ -66,7 +65,7 @@ public class MainActivity extends ActionBarActivity {
         /**
          *  Restore arguments from bundle
          *  mCurrentSelectedPosition
-         *  cardFindAutoCompleteText for CardFile fragment
+         *  cardFindAutoCompleteText for CardFileFragment fragment
          */
         mCurrentSelectedPosition = ((savedInstanceState != null) && savedInstanceState.containsKey(ARG_SECTION_NUMBER))?savedInstanceState.getInt(ARG_SECTION_NUMBER):0;
         cardFindAutoCompleteText = ((savedInstanceState != null) && savedInstanceState.containsKey(SAVED_TEXT_KEY))?savedInstanceState.getString(SAVED_TEXT_KEY):"";
@@ -211,22 +210,25 @@ public class MainActivity extends ActionBarActivity {
         switch (position) {
             case 0:
                 mTitle = mScreenTitles[mCurrentSelectedPosition];
-                fragment = CardFile.newInstance(cardFindAutoCompleteText);
+                fragment = CardFileFragment.newInstance(cardFindAutoCompleteText);
                 break;
             case 1:
                 mTitle = mScreenTitles[mCurrentSelectedPosition];
                 cardFindAutoCompleteText = "";
-                fragment = new MedicalHistory();
+                fragment = new MedicalHistoryFragment();
                 break;
             case 2:
-                mTitle = mScreenTitles[mCurrentSelectedPosition];
-                cardFindAutoCompleteText = "";
-                fragment = new Diagnostics();
+//                mTitle = mScreenTitles[mCurrentSelectedPosition];
+//                cardFindAutoCompleteText = "";
+//                fragment = new DiagnosticsFragment();
+                Intent intent = new Intent();
+            intent.setClass(this ,MyActivity.class);
+            startActivity(intent);
                 break;
             case 3:
                 mTitle = mScreenTitles[mCurrentSelectedPosition];
                 cardFindAutoCompleteText = "";
-                fragment = Testing.newInstance();
+                fragment = TestingFragment.newInstance();
                 break;
             default:
                 break;

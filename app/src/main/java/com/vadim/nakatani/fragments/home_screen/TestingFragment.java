@@ -14,8 +14,8 @@ import com.vadim.nakatani.R;
 /**
  *
  */
-public class Testing extends Fragment implements View.OnClickListener {
-    private final String TAG = Testing.class.getSimpleName();
+public class TestingFragment extends Fragment implements View.OnClickListener {
+    private final String TAG = TestingFragment.class.getSimpleName();
 
     Button buttonTestPatient;
     Button buttonTestAnonymous;
@@ -47,7 +47,7 @@ public class Testing extends Fragment implements View.OnClickListener {
 //            getActivity().runOnUiThread(new Runnable() {
 //                @Override
 //                public void run() {
-//                    Testing.this.updateReceivedData(data);
+//                    TestingFragment.this.updateReceivedData(data);
 //                }
 //            });
 ////            AsyncTask asyncTask = new AsyncTask<Void, Void, Void>() {
@@ -86,10 +86,10 @@ public class Testing extends Fragment implements View.OnClickListener {
      * Use this factory method to create a new instance of
      * this fragment using the provided parameters.
      *
-     * @return A new instance of fragment CardFile
+     * @return A new instance of fragment CardFileFragment
      */
-    public static Testing newInstance() {
-        Testing fragment = new Testing();
+    public static TestingFragment newInstance() {
+        TestingFragment fragment = new TestingFragment();
         //TODO add, if need, arguments
 //        Bundle args = new Bundle();
 //        args.putString(SAVED_TEXT_KEY, cardFindAutoCompleteText);
@@ -97,7 +97,7 @@ public class Testing extends Fragment implements View.OnClickListener {
         return fragment;
     }
 
-    public Testing() {
+    public TestingFragment() {
         // Required empty public constructor
     }
 

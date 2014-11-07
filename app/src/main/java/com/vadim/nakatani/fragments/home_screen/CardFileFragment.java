@@ -1,12 +1,13 @@
 package com.vadim.nakatani.fragments.home_screen;
 
+
+import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 import android.os.Bundle;
-import android.app.Fragment;
 import android.support.v4.widget.DrawerLayout;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -23,7 +24,7 @@ import android.widget.ListView;
 import com.vadim.nakatani.DatabaseHelper;
 import com.vadim.nakatani.MainActivity;
 import com.vadim.nakatani.R;
-import com.vadim.nakatani.fragments.Leftmenu_private_info_block;
+import com.vadim.nakatani.fragments.Leftmenu_private_info_blockFragment;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -33,7 +34,7 @@ import java.util.List;
 /**
  *
  */
-public class CardFile extends Fragment implements TextWatcher {
+public class CardFileFragment extends Fragment implements TextWatcher {
     /* the fragment initialization parameters, e.g. ARG_ITEM_NUMBER*/
     private static final String SAVED_TEXT_KEY = "SavedText";
     private static final String IS_PATIENT_FRAGMENT_ACTIVE = "is patient fargment active";
@@ -48,25 +49,22 @@ public class CardFile extends Fragment implements TextWatcher {
     private List<String> patientsList = new ArrayList<String>();
     private SQLiteDatabase newDB;
 
-    //TODO delete this array, in future work with data from SQLite
-    final String[] contacts = {"Jacob", "Emily", "Jacym", "jacob", "Ernst", "Michael"};
-
     /**
      * Use this factory method to create a new instance of
      * this fragment using the provided parameters.
      *
      * @param cardFindAutoCompleteText Text that was entered in autocomplete field
-     * @return A new instance of fragment CardFile
+     * @return A new instance of fragment CardFileFragment
      */
-    public static CardFile newInstance(String cardFindAutoCompleteText) {
-        CardFile fragment = new CardFile();
+    public static CardFileFragment newInstance(String cardFindAutoCompleteText) {
+        CardFileFragment fragment = new CardFileFragment();
         Bundle args = new Bundle();
         args.putString(SAVED_TEXT_KEY, cardFindAutoCompleteText);
         fragment.setArguments(args);
         return fragment;
     }
 
-    public CardFile() {
+    public CardFileFragment() {
         // Required empty public constructor
     }
 
@@ -124,7 +122,7 @@ public class CardFile extends Fragment implements TextWatcher {
 //            Intent intent = new Intent();
 //            intent.setClass(getActivity() ,PatientCardActivity.class);
 //            startActivity(intent);
-            Fragment fragment = new Leftmenu_private_info_block();
+            Fragment fragment = new Leftmenu_private_info_blockFragment();
             FragmentManager fragmentManager = getFragmentManager();
             FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
             fragmentTransaction.replace(R.id.private_info, fragment).commit();

@@ -1,10 +1,10 @@
 package com.vadim.nakatani.fragments.home_screen;
 
 import android.app.Activity;
+import android.app.Fragment;
 import android.graphics.Paint;
 import android.net.Uri;
 import android.os.Bundle;
-import android.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -32,11 +32,11 @@ import java.util.Arrays;
 /**
  *
  */
-public class Diagnostics extends Fragment {
+public class DiagnosticsFragment extends Fragment {
     private XYPlot plot;
     int[] intensities;
 
-    public Diagnostics() {
+    public DiagnosticsFragment() {
         // Required empty public constructor
     }
 

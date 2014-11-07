@@ -14,9 +14,9 @@ import com.vadim.nakatani.R;
 /**
  *
  */
-public class MedicalHistory extends Fragment {
+public class MedicalHistoryFragment extends Fragment {
 
-    public MedicalHistory() {
+    public MedicalHistoryFragment() {
         // Required empty public constructor
     }
 
