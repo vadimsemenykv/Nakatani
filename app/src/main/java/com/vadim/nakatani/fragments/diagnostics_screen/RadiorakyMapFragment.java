@@ -59,7 +59,7 @@ public class RadiorakyMapFragment extends Fragment {
 
 //        Number[] radiorakyValuesForPlot =
 
-        List<Integer> radiorakyValuesForPlot = new ArrayList<Integer>();
+        List<Number> radiorakyValuesForPlot = new ArrayList<Number>();
 
         for (int i = 0, j = 0, k = 0; i < 12; i++, j++, k++) {
             if (j == 6) j = 12;
@@ -73,7 +73,8 @@ public class RadiorakyMapFragment extends Fragment {
         plot = (XYPlot) rootView.findViewById(R.id.mySimpleXYPlot);
 
         // Create an array of y-values to plot:
-        Number[] values = { 0, 38, 43, 0, 65, 32, 0, 36, 32, 0, 48, 50, 0, 59, 43, 0, 30, 48, 0 };
+//        Number[] values = { 0, 38, 43, 0, 65, 32, 0, 36, 32, 0, 48, 50, 0, 59, 43, 0, 30, 48, 0 };
+//        Number[] values = Array
         Number[] valuesLowBorder = new Number[19];
         Number[] valuesMiddleBorder = new Number[19];
         Number[] valuesHighBorder = new Number[19];
@@ -92,7 +93,7 @@ public class RadiorakyMapFragment extends Fragment {
         }
 
         // Turn the above array into XYSeries':
-        XYSeries seriesRadorakyBar = new SimpleXYSeries(Arrays.asList(values), SimpleXYSeries.ArrayFormat.Y_VALS_ONLY, "Series1");
+        XYSeries seriesRadorakyBar = new SimpleXYSeries(radiorakyValuesForPlot, SimpleXYSeries.ArrayFormat.Y_VALS_ONLY, "Series1");
         XYSeries seriesRadiorakyBarValue = new SimpleXYSeries(Arrays.asList(valuesBarValues), SimpleXYSeries.ArrayFormat.XY_VALS_INTERLEAVED, "Series2");
 
         XYSeries seriesLowBorderLine = new SimpleXYSeries(Arrays.asList(valuesLowBorder), SimpleXYSeries.ArrayFormat.Y_VALS_ONLY, "Series4");
