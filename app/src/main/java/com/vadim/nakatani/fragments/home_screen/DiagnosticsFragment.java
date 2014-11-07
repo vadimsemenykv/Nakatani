@@ -36,6 +36,11 @@ public class DiagnosticsFragment extends Fragment {
     private XYPlot plot;
     int[] intensities;
 
+    public static DiagnosticsFragment newInstance() {
+        DiagnosticsFragment fragment = new DiagnosticsFragment();
+        return fragment;
+    }
+
     public DiagnosticsFragment() {
         // Required empty public constructor
     }

@@ -71,7 +71,7 @@ public class MainActivity extends ActionBarActivity {
         cardFindAutoCompleteText = ((savedInstanceState != null) && savedInstanceState.containsKey(SAVED_TEXT_KEY))?savedInstanceState.getString(SAVED_TEXT_KEY):"";
         isPatientFragmentWasActive = ((savedInstanceState != null) && savedInstanceState.containsKey(IS_PATIENT_FRAGMENT_ACTIVE))?savedInstanceState.getBoolean(IS_PATIENT_FRAGMENT_ACTIVE):false;
 
-        mScreenTitles = getResources().getStringArray(R.array.screen_array);
+        mScreenTitles = getResources().getStringArray(R.array.home_screen_array);
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         mDrawerList = (ListView) findViewById(R.id.left_drawer_lw);
 

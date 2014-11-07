@@ -16,6 +16,11 @@ import com.vadim.nakatani.R;
  */
 public class MedicalHistoryFragment extends Fragment {
 
+    public static MedicalHistoryFragment newInstance() {
+        MedicalHistoryFragment fragment = new MedicalHistoryFragment();
+        return fragment;
+    }
+
     public MedicalHistoryFragment() {
         // Required empty public constructor
     }
