@@ -3,6 +3,7 @@ package com.vadim.nakatani.activitys;
 import java.util.Locale;
 
 import android.app.ActionBar;
+import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
@@ -15,18 +16,15 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import com.vadim.nakatani.R;
+import com.vadim.nakatani.fragments.diagnostics_screen.EKSValueFragment;
+import com.vadim.nakatani.fragments.diagnostics_screen.EvaluationFragment;
+import com.vadim.nakatani.fragments.diagnostics_screen.RadiorakyMapFragment;
+import com.vadim.nakatani.fragments.diagnostics_screen.RecommendationsFragment;
 import com.vadim.nakatani.fragments.home_screen.CardFileFragment;
 
-public class MyActivity extends FragmentActivity implements ActionBar.TabListener {
+public class MyActivity extends Activity implements ActionBar.TabListener {
 
-    /**
-     * The {@link android.support.v4.view.PagerAdapter} that will provide
-     * fragments for each of the sections. We use a
-     * {@link FragmentPagerAdapter} derivative, which will keep every
-     * loaded fragment in memory. If this becomes too memory intensive, it
-     * may be best to switch to a
-     * {@link android.support.v13.app.FragmentStatePagerAdapter}.
-     */
+    private String[] mTabTitles;
 
     /**
      * The {@link ViewPager} that will host the section contents.
@@ -41,6 +39,8 @@ public class MyActivity extends FragmentActivity implements ActionBar.TabListene
         setContentView(R.layout.activity_my);
 
         // Initilization
+        mTabTitles = getResources().getStringArray(R.array.diagnostics_screen_array);
+
         mViewPager = (ViewPager) findViewById(R.id.pager);
         actionBar = getActionBar();
         mSectionsPagerAdapter = new TabsPagerAdapter(getFragmentManager());
@@ -142,7 +142,7 @@ public class MyActivity extends FragmentActivity implements ActionBar.TabListene
         @Override
         public int getCount() {
             // Show 3 total pages.
-            return 3;
+            return 4;
         }
 
         @Override
@@ -150,17 +150,13 @@ public class MyActivity extends FragmentActivity implements ActionBar.TabListene
 
             switch (index) {
                 case 0:
-                    // Top Rated fragment activity
-//                    return new TopRatedFragment();
-                    return new CardFileFragment();
+                    return EKSValueFragment.newInstance("param1", "param2");
                 case 1:
-                    // Games fragment activity
-//                    return new GamesFragment();
-                    return new CardFileFragment();
+                    return RadiorakyMapFragment.newInstance();
                 case 2:
-                    // Movies fragment activity
-//                    return new MoviesFragment();
-                    return new CardFileFragment();
+                    return EvaluationFragment.newInstance("1", "2");
+                case 3:
+                    return RecommendationsFragment.newInstance("param1", "param2");
             }
 
             return null;
@@ -171,19 +167,13 @@ public class MyActivity extends FragmentActivity implements ActionBar.TabListene
             Locale l = Locale.getDefault();
             switch (position) {
                 case 0:
-                    return getString(R.string.title_section1).toUpperCase(l);
+                    return (mTabTitles[position]).toUpperCase(l);
                 case 1:
-                    return getString(R.string.title_section2).toUpperCase(l);
+                    return (mTabTitles[position]).toUpperCase(l);
                 case 2:
-                    return getString(R.string.title_section3).toUpperCase(l);
+                    return (mTabTitles[position]).toUpperCase(l);
                 case 3:
-                    return getString(R.string.title_section3).toUpperCase(l);
-                case 4:
-                    return getString(R.string.title_section3).toUpperCase(l);
-                case 5:
-                    return getString(R.string.title_section3).toUpperCase(l);
-                case 6:
-                    return getString(R.string.title_section3).toUpperCase(l);
+                    return (mTabTitles[position]).toUpperCase(l);
             }
             return null;
         }

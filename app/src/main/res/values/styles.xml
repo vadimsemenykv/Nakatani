@@ -8,7 +8,7 @@
         <item name="android:background">#ff243a9b</item>
     </style>
     <style name="left_navigation_style">
-        <item name="android:background">#784af547</item>
+        <item name="android:background">#ffd1d2d4</item>
     </style>
 
 </resources>

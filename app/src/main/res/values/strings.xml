@@ -10,11 +10,33 @@
     <string name="action_search">Поиск</string>
     <string name="refreshing">Refreshing...</string>
     <string name="app_title">USB Serial Example</string>
+    <string name="title_activity_test">Test</string>
+    <string name="title_activity_calibration">CalibrationActivity</string>
+    <string name="title_activity_diagnostics">DiagnosticsActivity</string>
+    <string name="title_activity_my">MyActivity</string>
 
-    <!-- Text -->
-    <string name="calibration_text_help">Для выполнения калибровки последовательно выбирите "Верхний предел" и "Нижний предел"</string>
-    <string name="calibration_text_help_low">Разомкните контакты датчика и удерживайте их разомкнутыми до окончания времени измерения</string>
-    <string name="calibration_text_help_high">Замкните контакты датчика и удерживайте их замкнутыми до окончания времени измерения</string>
+    <string-array name="home_screen_array">
+        <item>Картотека</item>
+        <item>История болезни</item>
+        <item>Диагностика</item>
+        <item>Тестирование</item>
+    </string-array>
+    <string-array name="diagnostics_screen_array">
+        <item>Значения ЭКС</item>
+        <item>Карта Радиораку</item>
+        <item>Оценка</item>
+        <item>Рекомендации</item>
+    </string-array>
+
+    <!-- HOME SCREEN FRAGMENTS -->
+    <!-- Card file Fragment -->
+
+
+    <!-- Medical History Fragment -->
+
+
+    <!-- Diagnostics Fragment -->
+
 
     <!-- Testing Fragment -->
     <string name="button_testing_for_patient">Тестирование для пациента</string>
@@ -26,6 +48,10 @@
     <string name="button_calibration_ok">Продолжить</string>
     <string name="radio_button_calibration_hi">Верхний предел</string>
     <string name="radio_button_calibration_low">Нижний предел</string>
+    <!-- Text -->
+    <string name="calibration_text_help">Для выполнения калибровки последовательно выбирите "Верхний предел" и "Нижний предел"</string>
+    <string name="calibration_text_help_low">Разомкните контакты датчика и удерживайте их разомкнутыми до окончания времени измерения</string>
+    <string name="calibration_text_help_high">Замкните контакты датчика и удерживайте их замкнутыми до окончания времени измерения</string>
 
     <!-- Test Activity -->
     <string name="button_test_start">Старт</string>
@@ -42,23 +68,6 @@
     <string name="text_view_point_name">Точки</string>
     <string name="text_view_point_value_left">Слева</string>
     <string name="text_view_point_value_right">Справа</string>
-
-    <string-array name="screen_array">
-        <item>Картотека</item>
-        <item>История болезни</item>
-        <item>Диагностика</item>
-        <item>Тестирование</item>
-    </string-array>
-
     <string name="hello_blank_fragment">Hello blank fragment</string>
-    <string name="title_activity_test">Test</string>
-    <string name="hello_world">Hello world!</string>
-    <string name="title_activity_calibration">CalibrationActivity</string>
-    <string name="title_activity_d">DActivity</string>
-    <string name="title_section1">Section 1</string>
-    <string name="title_section2">Section 2</string>
-    <string name="title_section3">Section 3</string>
-    <string name="title_activity_my">MyActivity</string>
-    <string name="title_activity_diagnostics">DiagnosticsActivity</string>
 
 </resources>
