@@ -168,6 +168,9 @@ public class TestActivity extends Activity implements View.OnClickListener{
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_test);
 
+        String strfg= "TIG7 òîíèçàöèÿ ñî ñòîðîíû ïîðàæåíèÿ\n" +
+                "Ñ7 äèñïåðñèÿ ñî ñòîðîíû ïîðàæåíèÿ";
+
         Drawable h1 = getResources().getDrawable(R.drawable.h_1);
         Drawable h2 = getResources().getDrawable(R.drawable.h_2);
         Drawable h3 = getResources().getDrawable(R.drawable.h_3);

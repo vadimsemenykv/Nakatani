@@ -60,7 +60,7 @@ public class RadiorakyMapFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-        View rootView = inflater.inflate(R.layout.fragment_diagnostics, container, false);
+        View rootView = inflater.inflate(R.layout.fragment_radioraky_map, container, false);
 
         int[] eksValues = new int[24];
         for (int i = 0; i < 24; i++) {
