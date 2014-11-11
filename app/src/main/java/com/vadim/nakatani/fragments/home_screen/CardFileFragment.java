@@ -2,13 +2,10 @@ package com.vadim.nakatani.fragments.home_screen;
 
 
 import android.app.Fragment;
-import android.app.FragmentManager;
-import android.app.FragmentTransaction;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 import android.os.Bundle;
-import android.support.v4.widget.DrawerLayout;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -16,15 +13,14 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
-import android.widget.LinearLayout;
 import android.widget.ListView;
 
 import com.vadim.nakatani.DatabaseHelper;
-import com.vadim.nakatani.MainActivity;
+import com.vadim.nakatani.NakataniApplication;
+import com.vadim.nakatani.PatientListAdapter;
 import com.vadim.nakatani.R;
-import com.vadim.nakatani.fragments.Leftmenu_private_info_blockFragment;
+import com.vadim.nakatani.entity.PatientEntity;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -42,9 +38,9 @@ public class CardFileFragment extends Fragment implements TextWatcher {
     private String mCardFindAutoCompleteText;
 
     private AutoCompleteTextView mAutoCompleteTextView;
-    private ListView mDrawerPatientList;
+    private ListView mListViewPatientList;
 
-    private ArrayAdapter<String> arrayAdapter;
+    private PatientListAdapter arrayAdapter;
 
     private List<String> patientsList = new ArrayList<String>();
     private SQLiteDatabase newDB;
@@ -82,16 +78,31 @@ public class CardFileFragment extends Fragment implements TextWatcher {
         View rootView = inflater.inflate(R.layout.fragment_card_file, container, false);
 
         mAutoCompleteTextView = (AutoCompleteTextView)rootView.findViewById(R.id.autoCompleteTextView);
-        mDrawerPatientList = (ListView) rootView.findViewById(R.id.patientListView);
-
         mAutoCompleteTextView.addTextChangedListener(this);
-        mDrawerPatientList.setOnItemClickListener(new PatientListClickListener());
 
-        openAndQueryDatabase();
+        mListViewPatientList = (ListView) rootView.findViewById(R.id.patientListView);
+        mListViewPatientList.setOnItemClickListener(new PatientListClickListener());
 
-//        arrayAdapter = new ArrayAdapter<String>(getActivity(), R.layout.drawer_navigation_list_item, contacts);
-        arrayAdapter = new ArrayAdapter<String>(getActivity(), R.layout.drawer_navigation_list_item, patientsList);
-        mDrawerPatientList.setAdapter(arrayAdapter);
+//        openAndQueryDatabase();
+        //TODO load data from db
+
+        ArrayList<PatientEntity> patientEntities = new ArrayList<PatientEntity>();
+        PatientEntity patientEntity1 = new PatientEntity();
+        patientEntity1.setCode("ПЕТ0001");
+        patientEntity1.setLastName("Петренко");
+        patientEntity1.setFirstName("Иван");
+        patientEntity1.setMiddleName("Сидорович");
+        PatientEntity patientEntity2 = new PatientEntity();
+        patientEntity2.setCode("АНД0001");
+        patientEntity2.setLastName("Андреев");
+        patientEntity2.setFirstName("Игорь");
+        patientEntity2.setMiddleName("Валерьевич");
+
+        patientEntities.add(patientEntity1);
+        patientEntities.add(patientEntity2);
+
+        arrayAdapter = new PatientListAdapter(getActivity(), patientEntities);
+        mListViewPatientList.setAdapter(arrayAdapter);
 
         mAutoCompleteTextView.setText(mCardFindAutoCompleteText);
 
@@ -101,6 +112,7 @@ public class CardFileFragment extends Fragment implements TextWatcher {
     @Override
     public void onTextChanged(CharSequence charSequence, int start, int before, int count) {
         arrayAdapter.getFilter().filter(charSequence);
+        Log.e(this.getClass().getName(), "call with " + charSequence.toString());
     }
 
     @Override
@@ -118,32 +130,9 @@ public class CardFileFragment extends Fragment implements TextWatcher {
     private class PatientListClickListener implements ListView.OnItemClickListener {
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-//            mAutoCompleteTextView.setText(arrayAdapter.getItem(position));
-//            Intent intent = new Intent();
-//            intent.setClass(getActivity() ,PatientCardActivity.class);
-//            startActivity(intent);
-            Fragment fragment = new Leftmenu_private_info_blockFragment();
-            FragmentManager fragmentManager = getFragmentManager();
-            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-            fragmentTransaction.replace(R.id.private_info, fragment).commit();
-
-            DrawerLayout mDrawerLayout = (DrawerLayout) getActivity().findViewById(R.id.drawer_layout);
-            LinearLayout mDrawerListContainer = (LinearLayout) getActivity().findViewById(R.id.left_drawer);
-
-            mDrawerLayout.closeDrawer(mDrawerListContainer);
-
-//            Bundle bundle = getActivity().getIntent().getExtras();
-//            bundle.putBoolean(IS_PATIENT_FRAGMENT_ACTIVE, true);
-
-            MainActivity mainActivity = (MainActivity) getActivity();
-            mainActivity.swapFragmentToPrivateInfo();
-
-//            fragment = new PatientPrivateInfo();
-//            fragmentTransaction = fragmentManager.beginTransaction();
-//            fragmentTransaction.replace(R.id.content_frame, fragment).commit();
-//            mDrawerLayout.closeDrawer(mDrawerListContainer);
-
-            Log.e(this.getClass().getName(), "selected = " + position + " id = " + id);
+            NakataniApplication nakataniApplication = (NakataniApplication) getActivity().getApplicationContext();
+            nakataniApplication.setPatientEntity(((PatientEntity)arrayAdapter.getItem(position)));
+            Log.d(this.getClass().getName(), ((PatientEntity)arrayAdapter.getItem(position)).getLastName());
         }
     }
 

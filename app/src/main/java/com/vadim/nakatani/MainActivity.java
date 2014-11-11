@@ -1,10 +1,10 @@
 package com.vadim.nakatani;
 
 import android.app.ActionBar;
+import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
-import android.content.Intent;
 import android.os.Bundle;
 //import android.support.v4.app.FragmentTransaction;
 import android.support.v4.widget.DrawerLayout;
@@ -13,6 +13,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
@@ -27,11 +28,11 @@ import android.support.v4.app.ActionBarDrawerToggle;
 //import android.support.v4.widget.DrawerLayout;
 import android.view.MenuInflater;
 
-import com.vadim.nakatani.activitys.MyActivity;
 import com.vadim.nakatani.entity.PatientEntity;
 import com.vadim.nakatani.fragments.home_screen.CardFileFragment;
+import com.vadim.nakatani.fragments.home_screen.DiagnosticsFragment;
 import com.vadim.nakatani.fragments.home_screen.MedicalHistoryFragment;
-import com.vadim.nakatani.fragments.PatientPrivateInfo;
+import com.vadim.nakatani.fragments.home_screen.PatientPrivateInfoFragment;
 import com.vadim.nakatani.fragments.home_screen.TestingFragment;
 
 
@@ -49,13 +50,8 @@ public class MainActivity extends ActionBarActivity {
     private int mCurrentSelectedPosition;
     private String cardFindAutoCompleteText;
 
-    private boolean isPatientFragmentWasActive;
-    private PatientEntity patientEntity;
-
-    private static final String IS_PATIENT_FRAGMENT_ACTIVE = "is patient fargment active";
     private static final String ARG_SECTION_NUMBER = "section_number";
     private static final String SAVED_TEXT_KEY = "SavedText";
-//    private static final String IS_PATIENT_NOT_NULL = "patient not null";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,7 +65,6 @@ public class MainActivity extends ActionBarActivity {
          */
         mCurrentSelectedPosition = ((savedInstanceState != null) && savedInstanceState.containsKey(ARG_SECTION_NUMBER))?savedInstanceState.getInt(ARG_SECTION_NUMBER):0;
         cardFindAutoCompleteText = ((savedInstanceState != null) && savedInstanceState.containsKey(SAVED_TEXT_KEY))?savedInstanceState.getString(SAVED_TEXT_KEY):"";
-        isPatientFragmentWasActive = ((savedInstanceState != null) && savedInstanceState.containsKey(IS_PATIENT_FRAGMENT_ACTIVE))?savedInstanceState.getBoolean(IS_PATIENT_FRAGMENT_ACTIVE):false;
 
         mScreenTitles = getResources().getStringArray(R.array.home_screen_array);
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -108,12 +103,7 @@ public class MainActivity extends ActionBarActivity {
         getActionBar().setDisplayHomeAsUpEnabled(true);
         getActionBar().setHomeButtonEnabled(true);
 
-        if(isPatientFragmentWasActive) {
-            swapFragmentToPrivateInfo();
-        } else {
-            selectItem(mCurrentSelectedPosition);
-        }
-//        Log.e(this.getClass().getName(), "from onCreate mCurrentSelectedPosition = " + mCurrentSelectedPosition);
+        selectItem(mCurrentSelectedPosition);
     }
 
     public void restoreActionBar() {
@@ -187,26 +177,16 @@ public class MainActivity extends ActionBarActivity {
     /**
      * Swaps fragments in the main content view
      */
-    public void swapFragmentToPrivateInfo() {
-        isPatientFragmentWasActive = true;
-        Fragment fragment = new PatientPrivateInfo();
-        FragmentManager fragmentManager = getFragmentManager();
-        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-        fragmentTransaction.replace(R.id.content_frame, fragment).commit();
-        mDrawerLayout.closeDrawer(mDrawerListContainer);
-    }
-
-    /**
-     * Swaps fragments in the main content view
-     */
     private void selectItem(int position) {
         /* Update the main content by replacing fragments*/
+        /*Hide keyboard*/
+        if (getCurrentFocus() != null) {
+            InputMethodManager inputMethodManager = (InputMethodManager)  getSystemService(Activity.INPUT_METHOD_SERVICE);
+            inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
+        }
+
         mCurrentSelectedPosition = position;
-        isPatientFragmentWasActive = false;
-//        Log.e(this.getClass().getName(), "from selectItem mCurrentSelectedPosition = " + mCurrentSelectedPosition);
         Fragment fragment = null;
-//        fragment = ShowDataFromUSB.newInstance(this);
-        position = 2;
         switch (position) {
             case 0:
                 mTitle = mScreenTitles[mCurrentSelectedPosition];
@@ -215,17 +195,19 @@ public class MainActivity extends ActionBarActivity {
             case 1:
                 mTitle = mScreenTitles[mCurrentSelectedPosition];
                 cardFindAutoCompleteText = "";
-                fragment = new MedicalHistoryFragment();
+                fragment = PatientPrivateInfoFragment.newInstance("", "");
                 break;
             case 2:
-//                mTitle = mScreenTitles[mCurrentSelectedPosition];
-//                cardFindAutoCompleteText = "";
-//                fragment = new DiagnosticsFragment();
-                Intent intent = new Intent();
-            intent.setClass(this ,MyActivity.class);
-            startActivity(intent);
+                mTitle = mScreenTitles[mCurrentSelectedPosition];
+                cardFindAutoCompleteText = "";
+                fragment = MedicalHistoryFragment.newInstance();
                 break;
             case 3:
+                mTitle = mScreenTitles[mCurrentSelectedPosition];
+                cardFindAutoCompleteText = "";
+                fragment = DiagnosticsFragment.newInstance();
+                break;
+            case 4:
                 mTitle = mScreenTitles[mCurrentSelectedPosition];
                 cardFindAutoCompleteText = "";
                 fragment = TestingFragment.newInstance();
@@ -281,7 +263,6 @@ public class MainActivity extends ActionBarActivity {
     public void onSaveInstanceState(Bundle savedInstanceState){
         /* Saving variables*/
         savedInstanceState.putInt(ARG_SECTION_NUMBER, mCurrentSelectedPosition);
-        savedInstanceState.putBoolean(IS_PATIENT_FRAGMENT_ACTIVE, isPatientFragmentWasActive);
         if(findViewById(R.id.autoCompleteTextView) != null){
             savedInstanceState.putString(SAVED_TEXT_KEY, ((AutoCompleteTextView)findViewById(R.id.autoCompleteTextView)).getText().toString());
         }
@@ -290,14 +271,4 @@ public class MainActivity extends ActionBarActivity {
         super.onSaveInstanceState(savedInstanceState);
         Log.e(this.getClass().getName(), "onSaveInstanceState with mCurrentSelectedPosition = " + mCurrentSelectedPosition);
     }
-
-//    @Override
-//    public void onRestoreInstanceState(Bundle savedInstanceState){
-//        // Call at the start
-//        super.onRestoreInstanceState(savedInstanceState);
-//
-//        // Retrieve variables
-//        mCurrentSelectedPosition = savedInstanceState.getInt(ARG_SECTION_NUMBER);
-//        Log.e(this.getClass().getName(), "onRestoreInstanceState with mCurrentSelectedPosition = " + mCurrentSelectedPosition);
-//    }
 }

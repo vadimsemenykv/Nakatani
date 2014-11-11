@@ -22,7 +22,7 @@ import java.io.OutputStream;
  */
 public class DatabaseHelper extends SQLiteOpenHelper implements BaseColumns{
 
-    private static final String DB_NAME = "mydatabase.sqlite";
+    private static final String DB_NAME = "Nakatani.sqlite";
     private static final int DB_VERSION = 1;
 
     /* */
@@ -36,13 +36,23 @@ public class DatabaseHelper extends SQLiteOpenHelper implements BaseColumns{
     public static final String PHONE_COLUMN = "phone";
     public static final String AGE_COLUMN = "age";
 
-    private final Context mContext;
+    public static class ActionTable {
+        public static String TABLE_NAME = "Action";
+    }
 
-    private static final String DATABASE_CREATE_SCRIPT = "create table "
-            + DB_TABLE + " (" + BaseColumns._ID
-            + " integer primary key autoincrement, " + CAT_NAME_COLUMN
-            + " text not null, " + PHONE_COLUMN + " integer, " + AGE_COLUMN
-            + " integer);";
+    public static class PatientTable {
+        public static final String TABLE_NAME = "Patient";
+        public static final String CODE_COLUMN = "code";
+        public static final String ID_DOCTOR_COLUMN = "idDoctor";
+        public static final String LAST_NAME_COLUMN = "lastName";
+        public static final String FIRST_NAME_COLUMN = "firstName";
+        public static final String MIDDLE_NAME_COLUMN = "middleName";
+        public static final String ID_SEX_COLUMN = "idSex";
+//        public static final String LAST_NAME_COLUMN = "lastName";
+
+    }
+
+    private final Context mContext;
 
     public DatabaseHelper(Context context) {
         super(context, DB_NAME, null, DB_VERSION);

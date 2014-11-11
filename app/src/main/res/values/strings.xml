@@ -17,6 +17,7 @@
 
     <string-array name="home_screen_array">
         <item>Картотека</item>
+        <item>Карточка пациента</item>
         <item>История болезни</item>
         <item>Диагностика</item>
         <item>Тестирование</item>

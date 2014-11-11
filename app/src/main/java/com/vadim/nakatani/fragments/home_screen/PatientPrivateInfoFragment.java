@@ -1,8 +1,6 @@
-package com.vadim.nakatani.fragments;
+package com.vadim.nakatani.fragments.home_screen;
 
-import android.app.Activity;
 import android.app.Fragment;
-import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,16 +8,7 @@ import android.view.ViewGroup;
 
 import com.vadim.nakatani.R;
 
-/**
- * A simple {@link Fragment} subclass.
- * Activities that contain this fragment must implement the
- * {@link PatientPrivateInfo.OnFragmentInteractionListener} interface
- * to handle interaction events.
- * Use the {@link PatientPrivateInfo#newInstance} factory method to
- * create an instance of this fragment.
- *
- */
-public class PatientPrivateInfo extends Fragment {
+public class PatientPrivateInfoFragment extends Fragment {
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
@@ -35,18 +24,18 @@ public class PatientPrivateInfo extends Fragment {
      *
      * @param param1 Parameter 1.
      * @param param2 Parameter 2.
-     * @return A new instance of fragment PatientPrivateInfo.
+     * @return A new instance of fragment PatientPrivateInfoFragment.
      */
     // TODO: Rename and change types and number of parameters
-    public static PatientPrivateInfo newInstance(String param1, String param2) {
-        PatientPrivateInfo fragment = new PatientPrivateInfo();
+    public static PatientPrivateInfoFragment newInstance(String param1, String param2) {
+        PatientPrivateInfoFragment fragment = new PatientPrivateInfoFragment();
         Bundle args = new Bundle();
         args.putString(ARG_PARAM1, param1);
         args.putString(ARG_PARAM2, param2);
         fragment.setArguments(args);
         return fragment;
     }
-    public PatientPrivateInfo() {
+    public PatientPrivateInfoFragment() {
         // Required empty public constructor
     }
 

@@ -19,12 +19,6 @@
         android:layout_gravity="start"
         android:divider="@android:color/transparent">
 
-        <FrameLayout
-            android:id="@+id/private_info"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" >
-        </FrameLayout>
-
         <ListView style="@style/left_navigation_style"
             android:id="@+id/left_drawer_lw"
             android:layout_width="240dp"
