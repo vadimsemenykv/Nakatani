@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TableRow xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:id="@+id/tableRow_evaluation_headerF" >
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Точка"
+        android:id="@+id/textView_evaluation_header_point_nameF"
+        android:gravity="center"
+        android:layout_weight="1" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Меридиан"
+        android:id="@+id/textView_evaluation_header_point_meridianF"
+        android:layout_weight="2"
+        android:gravity="center" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Слева"
+        android:id="@+id/textView_evaluation_header_point_riodorakyF"
+        android:gravity="center"
+        android:layout_weight="1" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Справа"
+        android:id="@+id/textView_evaluation_header_point_deviationF"
+        android:gravity="center"
+        android:layout_weight="1" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Справа"
+        android:id="@+id/textView_evaluation_header_point_eksF"
+        android:gravity="center"
+        android:layout_weight="1" />
+</TableRow>

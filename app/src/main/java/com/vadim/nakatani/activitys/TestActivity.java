@@ -95,7 +95,10 @@ public class TestActivity extends Activity implements View.OnClickListener{
     private TextView textViewValueNow;
     private TextView textViewValueMax;
 
-    private TextView textViewPointDesc;
+    private TextView textViewPatientName;
+    private TextView textViewMeasurementDate;
+    private TextView textViewMeasurementTime;
+
     private ImageView imageView;
 
     private EditText editText_H1_L;
@@ -168,9 +171,6 @@ public class TestActivity extends Activity implements View.OnClickListener{
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_test);
 
-        String strfg= "TIG7 òîíèçàöèÿ ñî ñòîðîíû ïîðàæåíèÿ\n" +
-                "Ñ7 äèñïåðñèÿ ñî ñòîðîíû ïîðàæåíèÿ";
-
         Drawable h1 = getResources().getDrawable(R.drawable.h_1);
         Drawable h2 = getResources().getDrawable(R.drawable.h_2);
         Drawable h3 = getResources().getDrawable(R.drawable.h_3);
@@ -211,7 +211,10 @@ public class TestActivity extends Activity implements View.OnClickListener{
 
         textViewValueNow = (TextView) findViewById(R.id.textViewValueNow);
         textViewValueMax = (TextView) findViewById(R.id.textViewValueMax);
-        textViewPointDesc = (TextView) findViewById(R.id.textViewPointDescText);
+
+        textViewPatientName = (TextView) findViewById(R.id.textViewValueMax);
+        textViewMeasurementDate = (TextView) findViewById(R.id.textViewValueMax);
+        textViewMeasurementTime = (TextView) findViewById(R.id.textViewValueMax);
 
         editText_H1_L = (EditText) findViewById(R.id.editText_H1_L);
         editText_H2_L = (EditText) findViewById(R.id.editText_H2_L);

@@ -20,11 +20,11 @@ import java.util.List;
  */
 public class PatientListAdapter extends BaseAdapter implements Filterable{
 
-    ArrayList<PatientEntity> originList = new ArrayList<PatientEntity>();
+    List<PatientEntity> originList = new ArrayList<PatientEntity>();
     List<PatientEntity> filteredList = new ArrayList<PatientEntity>();
     Context context;
 
-    public PatientListAdapter(Context context, ArrayList<PatientEntity> arr) {
+    public PatientListAdapter(Context context, List<PatientEntity> arr) {
         if (arr != null) {
             originList = arr;
             filteredList = arr;
@@ -41,7 +41,6 @@ public class PatientListAdapter extends BaseAdapter implements Filterable{
     @Override
     public Object getItem(int num) {
         // TODO Auto-generated method stub
-        Log.e(this.getClass().getName(), "call get");
         return filteredList.get(num);
     }
 
@@ -80,13 +79,11 @@ public class PatientListAdapter extends BaseAdapter implements Filterable{
             @Override
             protected void publishResults(CharSequence constraint, FilterResults results) {
                 filteredList = (List<PatientEntity>) results.values;
-                Log.e(this.getClass().getName(), "call publish");
                 notifyDataSetChanged();
             }
 
             @Override
             protected FilterResults performFiltering(CharSequence constraint) {
-                Log.e(this.getClass().getName(), "call performFiltering");
 
                 FilterResults results = new FilterResults();
                 List<PatientEntity> FilteredArrList = new ArrayList<PatientEntity>();

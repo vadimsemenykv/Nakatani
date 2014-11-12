@@ -20,7 +20,10 @@ import com.vadim.nakatani.DatabaseHelper;
 import com.vadim.nakatani.NakataniApplication;
 import com.vadim.nakatani.PatientListAdapter;
 import com.vadim.nakatani.R;
+import com.vadim.nakatani.dao.PatientDAO;
+import com.vadim.nakatani.dao.ResultDAO;
 import com.vadim.nakatani.entity.PatientEntity;
+import com.vadim.nakatani.entity.ResultEntity;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -42,7 +45,7 @@ public class CardFileFragment extends Fragment implements TextWatcher {
 
     private PatientListAdapter arrayAdapter;
 
-    private List<String> patientsList = new ArrayList<String>();
+    private List<PatientEntity> patientsList = new ArrayList<PatientEntity>();
     private SQLiteDatabase newDB;
 
     /**
@@ -83,25 +86,7 @@ public class CardFileFragment extends Fragment implements TextWatcher {
         mListViewPatientList = (ListView) rootView.findViewById(R.id.patientListView);
         mListViewPatientList.setOnItemClickListener(new PatientListClickListener());
 
-//        openAndQueryDatabase();
-        //TODO load data from db
-
-        ArrayList<PatientEntity> patientEntities = new ArrayList<PatientEntity>();
-        PatientEntity patientEntity1 = new PatientEntity();
-        patientEntity1.setCode("ПЕТ0001");
-        patientEntity1.setLastName("Петренко");
-        patientEntity1.setFirstName("Иван");
-        patientEntity1.setMiddleName("Сидорович");
-        PatientEntity patientEntity2 = new PatientEntity();
-        patientEntity2.setCode("АНД0001");
-        patientEntity2.setLastName("Андреев");
-        patientEntity2.setFirstName("Игорь");
-        patientEntity2.setMiddleName("Валерьевич");
-
-        patientEntities.add(patientEntity1);
-        patientEntities.add(patientEntity2);
-
-        arrayAdapter = new PatientListAdapter(getActivity(), patientEntities);
+        arrayAdapter = new PatientListAdapter(getActivity(), (new PatientDAO(getActivity().getApplicationContext())).getAllPatients());
         mListViewPatientList.setAdapter(arrayAdapter);
 
         mAutoCompleteTextView.setText(mCardFindAutoCompleteText);
@@ -131,32 +116,14 @@ public class CardFileFragment extends Fragment implements TextWatcher {
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
             NakataniApplication nakataniApplication = (NakataniApplication) getActivity().getApplicationContext();
-            nakataniApplication.setPatientEntity(((PatientEntity)arrayAdapter.getItem(position)));
-            Log.d(this.getClass().getName(), ((PatientEntity)arrayAdapter.getItem(position)).getLastName());
-        }
-    }
 
-    private void openAndQueryDatabase() {
-        try {
-            DatabaseHelper dbHelper = new DatabaseHelper(getActivity().getApplicationContext());
-            dbHelper.createDataBase();
-            newDB = dbHelper.getWritableDatabase();
-            Cursor cursor = newDB.rawQuery("SELECT " + DatabaseHelper.CAT_NAME_COLUMN + " FROM " + DatabaseHelper.DB_TABLE, null);
-            if (cursor != null ) {
-                if  (cursor.moveToFirst()) {
-                    do {
-                        String name = cursor.getString(cursor.getColumnIndex(DatabaseHelper.CAT_NAME_COLUMN));
-                        patientsList.add(name);
-                    }while (cursor.moveToNext());
-                }
-            }
-        } catch (SQLiteException sqLiteException ) {
-            Log.e(getClass().getSimpleName(), "Could not create or Open the database");
-        } catch (IOException e) {
-            Log.e(getClass().getSimpleName(), "Exception in DB HELPER when create database");
-        } finally {
-            if (newDB != null) newDB.close();
-        }
+            //TODO add selecting phones;
+            /*set result List for selected patient*/
+            PatientEntity patientEntity = (PatientEntity)arrayAdapter.getItem(position);
+            List<ResultEntity> resultEntityList = (new ResultDAO(getActivity().getApplicationContext())).getAllResultsForPatient(patientEntity);
+            patientEntity.setResultEntityList(resultEntityList);
 
+            nakataniApplication.setPatientEntity(patientEntity);
+        }
     }
 }

@@ -6,16 +6,32 @@
 
     <!-- TODO: Update blank fragment layout -->
 
-    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    <LinearLayout
+        android:orientation="vertical"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent">
 
-        <com.androidplot.xy.XYPlot
-            android:id="@+id/mySimpleXYPlot"
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
-            androidPlot.title="A Simple XY Plot"
-            />
-    </LinearLayout>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Результаты тестирований пациента:"
+            android:id="@+id/textView_diagnostics" />
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Петров Петр Петрович"
+            android:id="@+id/textView_diagnostics_patient_name" />
+
+        <ListView style="@style/left_navigation_style"
+            android:id="@+id/listView_diagnostics_results"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="start"
+            android:choiceMode="singleChoice"
+            android:divider="@android:color/transparent"
+            android:dividerHeight="0dp"/>
+    </LinearLayout>
 </FrameLayout>

@@ -8,8 +8,17 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebView;
+import android.widget.TableLayout;
+import android.widget.TableRow;
+import android.widget.TextView;
 
+import com.vadim.nakatani.NakataniApplication;
 import com.vadim.nakatani.R;
+import com.vadim.nakatani.RiodorakyDump;
+import com.vadim.nakatani.entity.PatientEntity;
+import com.vadim.nakatani.entity.ResultEntity;
+
+import java.util.List;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -18,6 +27,18 @@ import com.vadim.nakatani.R;
  *
  */
 public class EvaluationFragment extends Fragment {
+    private TextView[][] textViewsArray;
+    private String[] pointsName = {"H1", "H2", "H3", "H4", "H5", "H6", "F1", "F2", "F3", "F4", "F5", "F6"};
+    //    private int[] eksValueList;/* = {13, 25, 34, 45, 53, 68, 14, 25, 34, 45, 53, 68, 24, 25, 34, 35, 23, 28, 24, 25, 34, 35, 23, 28 };*/
+    private List<Integer> eksValueList;
+
+    private TextView textViewPatientName;
+    private TextView textViewResultCode;
+    private TextView textViewDateTime;
+    private TextView textViewMiddle;
+    private TextView textViewCor;
+
+
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
@@ -63,27 +84,81 @@ public class EvaluationFragment extends Fragment {
         // Inflate the layout for this fragment
         View rootView = inflater.inflate(R.layout.fragment_evaluation, container, false);
 
-        String htmlString = "\n" +
-                "<html>\n" +
-                "<head>\n" +
-                "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">\n" +
-                "<meta name=\"generator\" content=\"SautinSoft.RtfToHtml.dll\">\n" +
-                "<title>Document title</title>\n" +
-                "<style type=\"text/css\">\n" +
-                ".st1{font-family:Arial;font-size:12pt;color:#008000;font-weight:bold}\n" +
-                ".st2{font-family:Arial;font-size:10pt;color:#000000}\n" +
-                "</style>\n" +
-                "</head>\n" +
-                "<body>\n" +
-                "<div>\n" +
-                "<div style=\"margin:4.5pt 0pt 0pt 0pt;line-height:normal;\"><span class=\"st1\">&#1042;&#1077;&#1088;&#1086;&#1103;&#1090;&#1085;&#1099;&#1077; &#1085;&#1072;&#1088;&#1091;&#1096;&#1077;&#1085;&#1080;&#1103;:</span></div>\n" +
-                "<div style=\"margin:0pt 0pt 0pt 0pt;line-height:normal;\"><span class=\"st2\">&#1078;&#1077;&#1083;&#1091;&#1076;&#1082;&#1072; &#1080; &#1087;&#1086;&#1076;&#1078;&#1077;&#1083;&#1091;&#1076;&#1086;&#1095;&#1085;&#1086;&#1081; &#1078;&#1077;&#1083;&#1077;&#1079;&#1099;; &#1092;&#1091;&#1085;&#1082;&#1094;&#1080;&#1080; &#1090;&#1088;&#1072;&#1085;&#1089;&#1087;&#1086;&#1088;&#1090;&#1080;&#1088;&#1086;&#1074;&#1082;&#1080; &#1080; &#1090;&#1088;&#1072;&#1085;&#1089;&#1092;&#1086;&#1088;&#1084;&#1072;&#1094;&#1080;&#1080; &#1087;&#1080;&#1097;&#1080; &#1080; &#1074;&#1086;&#1076;&#1099;; &#1074;&#1086;&#1089;&#1087;&#1088;&#1080;&#1103;&#1090;&#1080;&#1077; &#1074;&#1082;&#1091;&#1089;&#1086;&#1074;&#1099;&#1093; &#1086;&#1097;&#1091;&#1097;&#1077;&#1085;&#1080;&#1081;; &#1092;&#1091;&#1085;&#1082;&#1094;&#1080;&#1080; &#1082;&#1088;&#1086;&#1074;&#1086;&#1089;&#1085;&#1072;&#1073;&#1078;&#1077;&#1085;&#1080;&#1103; (&#1086;&#1095;&#1080;&#1089;&#1090;&#1082;&#1072; &#1080; &#1089;&#1086;&#1089;&#1090;&#1072;&#1074; &#1082;&#1088;&#1086;&#1074;&#1080;); &#1082;&#1086;&#1085;&#1090;&#1088;&#1086;&#1083;&#1103; &#1085;&#1072;&#1076; &#1084;&#1099;&#1096;&#1094;&#1072;&#1084;&#1080;. </span></div>\n" +
-                "</div><div style=\"text-align:center;\">The trial version of RTF-to-HTML DLL .Net can convert up to 10000 symbols.<br><a href=\"http://www.sautinsoft.com/convert-rtf-to-html/order.php\">Get the full featured version!</a></div>\n" +
-                "</body>\n" +
-                "</html>";
+        NakataniApplication nakataniApplication = (NakataniApplication) getActivity().getApplicationContext();
+        PatientEntity patientEntity = nakataniApplication.getPatientEntity();
+        ResultEntity resultEntity = nakataniApplication.getResultEntity();
+        eksValueList = resultEntity.getPointsValue();
 
-        WebView webView = (WebView) rootView.findViewById(R.id.webView1);
-        webView.loadData(htmlString,"text/html", null);
+        /*get Riodoraky array*/
+        int[] eksValues = new int[resultEntity.getPointsValue().size()];
+        for (int i = 0; i < resultEntity.getPointsValue().size(); i++) {
+            eksValues[i] = resultEntity.getPointsValue().get(i);
+        }
+        RiodorakyDump riodorakyDump = new RiodorakyDump(eksValues);
+        int[] riodoraky = riodorakyDump.getRiodoraky();
+
+        textViewPatientName = (TextView) rootView.findViewById(R.id.textView_evaluation_patient_name);
+        textViewPatientName.setText(patientEntity.getLastName() + " " + patientEntity.getFirstName() + " " + patientEntity.getMiddleName());
+
+        textViewResultCode = (TextView) rootView.findViewById(R.id.textView_evaluation_result_code);
+        textViewResultCode.setText(resultEntity.getCode());
+
+        textViewDateTime = (TextView) rootView.findViewById(R.id.textView_evaluation_result_data);
+        textViewDateTime.setText(resultEntity.getDate() + " " + resultEntity.getTime());
+
+        textViewMiddle = (TextView) rootView.findViewById(R.id.textView_evaluation_middle);
+        textViewMiddle.setText("" + riodorakyDump.getMiddleEKS() + " / " + riodorakyDump.getMiddleRiodoraky());
+
+        textViewCor = (TextView) rootView.findViewById(R.id.textView_evaluation_cor);
+        textViewCor.setText("" + riodorakyDump.getLowRiodoraky() + "..." + riodorakyDump.getHighRiodoraky());
+
+        textViewsArray = new TextView[12][3];
+
+        TableLayout tableLayout = (TableLayout) rootView.findViewById(R.id.tableLayout_evaluation);
+        TableRow tableRow = (TableRow) tableLayout.findViewById(R.id.tableRow_evaluation_header);
+        tableLayout.removeAllViews();
+        tableLayout.addView(tableRow);
+
+        for (int i = 0, j = 0; i < 12; i++, j++) {
+            if (j == 6) j = 12;
+            TableRow tableRowCopy = (TableRow) inflater.inflate(R.layout.fragment_evaluation_table_row, null);
+
+            TextView textViewN = (TextView) tableRowCopy.findViewById(R.id.textView_evaluation_header_point_nameF);
+            TextView textViewM = (TextView) tableRowCopy.findViewById(R.id.textView_evaluation_header_point_meridianF);
+            TextView textViewRadioraky = (TextView) tableRowCopy.findViewById(R.id.textView_evaluation_header_point_riodorakyF);
+            TextView textViewDeviation = (TextView) tableRowCopy.findViewById(R.id.textView_evaluation_header_point_deviationF);
+            TextView textViewEKS = (TextView) tableRowCopy.findViewById(R.id.textView_evaluation_header_point_eksF);
+
+            textViewN.setText(pointsName[i]);
+
+            String riodorakyStr = "" + riodoraky[j] + " / " + riodoraky[j + 6];
+            textViewRadioraky.setText(riodorakyStr);
+
+            String devL = "0";
+            if ((riodoraky[j] - riodorakyDump.getLowRiodoraky()) < 0) devL = "-" + (riodorakyDump.getLowRiodoraky() - riodoraky[j]);
+            if ((riodorakyDump.getHighRiodoraky() - riodoraky[j]) < 0) devL = "+" + (riodoraky[j] - riodorakyDump.getHighRiodoraky());
+            String devR = "0";
+            if ((riodoraky[j + 6] - riodorakyDump.getLowRiodoraky()) < 0) devR = "-" + (riodorakyDump.getLowRiodoraky() - riodoraky[j]);
+            if ((riodorakyDump.getHighRiodoraky() - riodoraky[j + 6]) < 0) devR = "+" + (riodoraky[j] - riodorakyDump.getHighRiodoraky());
+
+            String deviationStr = devL + " / " + devR;
+            textViewDeviation.setText(deviationStr);
+
+            String eksStr = String.valueOf(eksValueList.get(j)) + " / " + String.valueOf(eksValueList.get(j + 6));
+            textViewEKS.setText(eksStr);
+
+//            textViewRadioraky.setText(String.valueOf(eksValueList.get(j)));
+//            textViewEKS.setText(String.valueOf(eksValueList.get(j + 6)));
+
+            textViewsArray[i][0] = textViewRadioraky;
+            textViewsArray[i][1] = textViewDeviation;
+            textViewsArray[i][2] = textViewEKS;
+
+            tableLayout.addView(tableRowCopy);
+        }
+
+        WebView webView = (WebView) rootView.findViewById(R.id.webViewEvaluation);
+        webView.loadUrl("file:///android_asset/textsections/ts_p1_s16.html");
 
         return rootView;
     }

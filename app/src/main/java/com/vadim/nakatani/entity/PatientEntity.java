@@ -1,10 +1,14 @@
 package com.vadim.nakatani.entity;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Created by vadim on 23.10.14.
  */
 public final class PatientEntity {
 
+    int _id;
     String code;
     int idDoctor;
     String lastName;
@@ -23,27 +27,18 @@ public final class PatientEntity {
     String fillDate;
     String lastVisit;
 
+    List<ResultEntity> resultEntityList = new ArrayList<ResultEntity>();
+    List<PhoneEntity> phoneEntityList = new ArrayList<PhoneEntity>();
+
     public PatientEntity() {
     }
 
-    public PatientEntity(String code, int idDoctor, String lastName, String firstName, String middleName, int idSex, String birthday, String address, String email, String work, String position, String profession, int children, String couple, String notes, String fillDate, String lastVisit) {
-        this.code = code;
-        this.idDoctor = idDoctor;
-        this.lastName = lastName;
-        this.firstName = firstName;
-        this.middleName = middleName;
-        this.idSex = idSex;
-        this.birthday = birthday;
-        this.address = address;
-        this.email = email;
-        this.work = work;
-        this.position = position;
-        this.profession = profession;
-        this.children = children;
-        this.couple = couple;
-        this.notes = notes;
-        this.fillDate = fillDate;
-        this.lastVisit = lastVisit;
+    public int get_id() {
+        return _id;
+    }
+
+    public void set_id(int _id) {
+        this._id = _id;
     }
 
     public String getCode() {
@@ -180,6 +175,22 @@ public final class PatientEntity {
 
     public void setLastVisit(String lastVisit) {
         this.lastVisit = lastVisit;
+    }
+
+    public List<ResultEntity> getResultEntityList() {
+        return resultEntityList;
+    }
+
+    public void setResultEntityList(List<ResultEntity> resultEntityList) {
+        this.resultEntityList = resultEntityList;
+    }
+
+    public List<PhoneEntity> getPhoneEntityList() {
+        return phoneEntityList;
+    }
+
+    public void setPhoneEntityList(List<PhoneEntity> phoneEntityList) {
+        this.phoneEntityList = phoneEntityList;
     }
 
     static String generateCode(String lastName) {

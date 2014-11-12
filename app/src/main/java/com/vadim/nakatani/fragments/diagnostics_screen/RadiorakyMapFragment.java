@@ -1,10 +1,8 @@
 package com.vadim.nakatani.fragments.diagnostics_screen;
 
-import android.app.Activity;
 import android.app.Fragment;
 import android.graphics.DashPathEffect;
 import android.graphics.Paint;
-import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -22,15 +20,16 @@ import com.androidplot.xy.SimpleXYSeries;
 import com.androidplot.xy.XYPlot;
 import com.androidplot.xy.XYSeries;
 import com.androidplot.xy.XYStepMode;
+import com.vadim.nakatani.NakataniApplication;
 import com.vadim.nakatani.R;
-import com.vadim.nakatani.RadoirakyDump;
+import com.vadim.nakatani.RiodorakyDump;
+import com.vadim.nakatani.entity.ResultEntity;
 
 import java.text.FieldPosition;
 import java.text.Format;
 import java.text.ParsePosition;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 
@@ -62,15 +61,22 @@ public class RadiorakyMapFragment extends Fragment {
 
         View rootView = inflater.inflate(R.layout.fragment_radioraky_map, container, false);
 
-        int[] eksValues = new int[24];
-        for (int i = 0; i < 24; i++) {
-            eksValues[i] = 50;
+        NakataniApplication nakataniApplication = (NakataniApplication) getActivity().getApplicationContext();
+        ResultEntity resultEntity = nakataniApplication.getResultEntity();
+        int[] eksValues = new int[resultEntity.getPointsValue().size()];
+        for (int i = 0; i < resultEntity.getPointsValue().size(); i++) {
+            eksValues[i] = resultEntity.getPointsValue().get(i);
         }
-        RadoirakyDump radoirakyDump = new RadoirakyDump(eksValues);
-        int[] radioraky = radoirakyDump.getRadioraky();
 
-        lowBorderValue = radoirakyDump.getLow();
-        highBorderValue = radoirakyDump.getHigh();
+//        int[] eksValues = new int[24];
+//        for (int i = 0; i < 24; i++) {
+//            eksValues[i] = 50;
+//        }
+        RiodorakyDump riodorakyDump = new RiodorakyDump(eksValues);
+        int[] radioraky = riodorakyDump.getRiodoraky();
+
+        lowBorderValue = riodorakyDump.getLowRiodoraky();
+        highBorderValue = riodorakyDump.getHighRiodoraky();
 
         List<Number> radiorakyValuesForBarSeries = new ArrayList<Number>();
 
@@ -98,9 +104,9 @@ public class RadiorakyMapFragment extends Fragment {
         valuesLowBorder[3] = lowBorderValue;
         Number[] valuesMiddleBorder = new Number[4];
         valuesMiddleBorder[0] = 0;
-        valuesMiddleBorder[1] = radoirakyDump.getMiddle();
+        valuesMiddleBorder[1] = riodorakyDump.getMiddleRiodoraky();
         valuesMiddleBorder[2] = radiorakyValuesForBarSeries.size() - 1;
-        valuesMiddleBorder[3] = radoirakyDump.getMiddle();
+        valuesMiddleBorder[3] = riodorakyDump.getMiddleRiodoraky();
         Number[] valuesHighBorder = new Number[4];
         valuesHighBorder[0] = 0;
         valuesHighBorder[1] = highBorderValue;

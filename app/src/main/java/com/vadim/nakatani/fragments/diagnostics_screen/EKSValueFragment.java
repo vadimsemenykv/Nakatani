@@ -11,7 +11,13 @@ import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 
+import com.vadim.nakatani.NakataniApplication;
 import com.vadim.nakatani.R;
+import com.vadim.nakatani.entity.ResultEntity;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -22,7 +28,8 @@ import com.vadim.nakatani.R;
 public class EKSValueFragment extends Fragment {
     private TextView[][] textViewsArray;
     private String[] pointsName = {"H1", "H2", "H3", "H4", "H5", "H6", "F1", "F2", "F3", "F4", "F5", "F6"};
-    private int[] eksValues = {13, 25, 34, 45, 53, 68, 14, 25, 34, 45, 53, 68, 24, 25, 34, 35, 23, 28, 24, 25, 34, 35, 23, 28 };
+//    private int[] eksValues;/* = {13, 25, 34, 45, 53, 68, 14, 25, 34, 45, 53, 68, 24, 25, 34, 35, 23, 28, 24, 25, 34, 35, 23, 28 };*/
+    private List<Integer> eksValues;
 
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -68,6 +75,10 @@ public class EKSValueFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_eksvalue, container, false);
 
+        NakataniApplication nakataniApplication = (NakataniApplication) getActivity().getApplicationContext();
+        ResultEntity resultEntity = nakataniApplication.getResultEntity();
+        eksValues = resultEntity.getPointsValue();
+
         textViewsArray = new TextView[12][2];
 
         TableLayout tableLayout = (TableLayout) rootView.findViewById(R.id.tableLayout_eks_fragment);
@@ -85,8 +96,8 @@ public class EKSValueFragment extends Fragment {
             TextView textViewVR = (TextView) tableRowCopy.findViewById(R.id.textView_eks_header_point_value_rightF);
 
             textViewN.setText(pointsName[i]);
-            textViewVL.setText(String.valueOf(eksValues[j]));
-            textViewVR.setText(String.valueOf(eksValues[j + 6]));
+            textViewVL.setText(String.valueOf(eksValues.get(j)));
+            textViewVR.setText(String.valueOf(eksValues.get(j + 6)));
 
             textViewsArray[i][0] = textViewVL;
             textViewsArray[i][1] = textViewVR;

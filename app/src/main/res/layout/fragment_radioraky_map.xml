@@ -14,7 +14,6 @@ tools:context="com.vadim.nakatani.fragments.diagnostics_screen.RadiorakyMapFragm
         android:id="@+id/mySimpleXYPlot"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
-        androidPlot.title="A Simple XY Plot"
         />
 </LinearLayout>
 

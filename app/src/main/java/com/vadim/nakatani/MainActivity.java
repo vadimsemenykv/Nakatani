@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -19,6 +20,7 @@ import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import android.content.res.Configuration;
@@ -170,7 +172,7 @@ public class MainActivity extends ActionBarActivity {
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
             selectItem(position);
-            Log.e(this.getClass().getName(), "selected = " + position);
+            Log.d(this.getClass().getName(), "selected = " + position);
         }
     }
 
@@ -184,6 +186,17 @@ public class MainActivity extends ActionBarActivity {
             InputMethodManager inputMethodManager = (InputMethodManager)  getSystemService(Activity.INPUT_METHOD_SERVICE);
             inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
         }
+
+
+        //TODO maybe add saving which position is was called
+        NakataniApplication nakataniApplication = (NakataniApplication) getApplicationContext();
+        if (nakataniApplication.getPatientEntity() == null) {
+            if (position != 0 && position != 4) {
+                showToast("Для продолжения работы\nвыберите пациента из картотеки");
+                position = 0;
+            }
+        }
+
 
         mCurrentSelectedPosition = position;
         Fragment fragment = null;
@@ -227,10 +240,8 @@ public class MainActivity extends ActionBarActivity {
             /* Highlight the selected item, update the title, and close the drawer*/
             mDrawerList.setItemChecked(position, true);
             setTitle(mScreenTitles[position]);
-//            mDrawerLayout.closeDrawer(mDrawerList);
             mDrawerLayout.closeDrawer(mDrawerListContainer);
         } else {
-            // Error
             Log.e(this.getClass().getName(), "Error. Fragment is not created");
         }
     }
@@ -269,6 +280,22 @@ public class MainActivity extends ActionBarActivity {
 
         /* Call at the end*/
         super.onSaveInstanceState(savedInstanceState);
-        Log.e(this.getClass().getName(), "onSaveInstanceState with mCurrentSelectedPosition = " + mCurrentSelectedPosition);
+        Log.d(this.getClass().getName(), "onSaveInstanceState with mCurrentSelectedPosition = " + mCurrentSelectedPosition);
+    }
+
+    private void showToast(final String msg)
+    {
+        runOnUiThread(new Runnable() {
+            public void run() {
+                Toast toast = Toast.makeText(MainActivity.this, msg, Toast.LENGTH_LONG);
+                toast.setGravity(Gravity.CENTER, 0, 0);
+                LinearLayout linearLayout = (LinearLayout) toast.getView();
+                TextView messageTextView = (TextView) linearLayout.getChildAt(0);
+                messageTextView.setTextSize(25);
+                messageTextView.setGravity(Gravity.CENTER);
+                toast.show();
+
+            }
+        });
     }
 }
